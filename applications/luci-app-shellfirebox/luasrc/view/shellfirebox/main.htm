@@ -1,0 +1,472 @@
+<%+header%>
+
+<script type="text/javascript">//<![CDATA[
+	if (!Date.now) {
+	    Date.now = function() { return new Date().getTime(); }
+	}
+
+    var currentAction = null;
+    var stateGuiUpdateTime = null; 
+    var prevStateObj = null;
+    var beforeGuiState = null;
+    
+	function setConnectionState(stateObj, fromGui) {
+		if (stateObj == null) {
+			return;		
+		}
+		
+		if (fromGui == true) {
+			beforeGuiState = prevStateObj;
+			stateGuiUpdateTime = Date.now();
+		} else if (beforeGuiState != null) {
+			// for 10 seconds, do not revert back to the previous state
+			now = Date.now();
+			diff = now -  stateGuiUpdateTime;
+			
+			if (diff < 10000 && stateObj.state == beforeGuiState.state) {
+				return;
+			}
+		}
+		
+		if (stateObj.state == "connected") {
+			
+			$("#connectionstate i").removeClass().addClass("fa fa-lock fa-5x");
+			$("#connectionstate").css("color", "#46A546");
+
+			action = "disconnect"
+			$("#action a i").css("color", "red");
+			$("#action a span").css("color", "red");
+			$("#action a i").removeClass().addClass("fa fa-lock-open-alt fa-lg");
+			$("#action a span").text(stateObj.actionText);
+			
+		} else	if ((stateObj.state == "connecting") || (stateObj.state == "waiting")) {
+			
+			$("#connectionstate i").removeClass().addClass("fa fa-spinner animate-spin fa-5x");
+			$("#connectionstate").css("color", "grey");
+
+			action = "abort"
+			$("#action a i").css("color", "red");
+			$("#action a span").css("color", "red");
+			$("#action a i").removeClass().addClass("fa fa-lock-open-alt fa-lg");
+			$("#action a span").text(stateObj.actionText);
+			
+		} else if (stateObj.state == "disconnected") {
+
+			$("#connectionstate i").removeClass().addClass("fa fa-lock-open-alt fa-5x");
+			$("#connectionstate").css("color", "red");
+			
+			action = "connect"
+			$("#action a i").css("color", "green");
+			$("#action a span").css("color", "green");
+			$("#action a i").removeClass().addClass("fa fa-lock fa-lg");
+			$("#action a span").text(stateObj.actionText);
+			
+		/*	
+		} else if (stateObj.state == "waiting") {
+
+			$("#connectionstate i").removeClass().addClass("fa fa-globe animate-spin fa-5x");
+			$("#connectionstate").css("color", "grey");
+
+			$("#action a i").css("color", "grey");
+			$("#action a span").css("color", "grey");
+			$("#action a i").removeClass().addClass("fa fa-lock fa-lg");
+			$("#action a span").text(stateObj.actionText);
+		*/
+		} else { // if stateObj.state == "error") { o
+			
+			$("#connectionstate i").removeClass().addClass("fa fa-question fa-5x");
+			$("#connectionstate").css("color", "red");
+
+			action = "connect";
+			$("#action a i").css("color", "green");
+			$("#action a span").css("color", "green");
+			$("#action a i").removeClass().addClass("fa fa-lock fa-lg");
+			$("#action a span").text(stateObj.actionText);
+		}
+		
+		$("#connectionstate span").text(stateObj.stateText);
+
+		actionHref = "<%= build_url("admin/services/shellfirebox") %>/"+action;
+		currentAction = action;
+		$("#action a").attr("href", actionHref);
+		$("#action a span").text(stateObj.actionText);
+		
+		$("#action a").prop('disabled', false);
+		$("#action a").show();
+		
+		prevStateObj = stateObj;
+	}
+
+	function doAction(aAction, aParam) {
+		if (typeof aAction == 'undefined' || aAction == null) {
+			aAction = currentAction;		
+		}
+	
+		if (aAction != null) {
+			XHR.get('<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { performAction: 1, action: aAction, param: aParam },
+				function(x, something)
+				{
+					
+				}
+			);
+			
+			var stateObj = {};
+			if (aAction == "connect") {
+				stateObj.state = "connecting";
+      		stateObj.stateText = "<%:Connecting...%>";
+      		stateObj.actionText = "<%:Abort%>";
+			}
+			else if (aAction == "abort" || aAction == "disconnect") {
+				stateObj.state = "disconnected";
+      		stateObj.stateText = "<%:Disconnected%>";
+      		stateObj.actionText = "<%:Connect%>";
+			} else if (aAction == "setServerTo") {
+				stateObj.state = "waiting";
+      			stateObj.stateText = "<%:Changing Server...%>";
+      			stateObj.actionText = "<%:Abort%>";
+			} else if (aAction == "connectionModeChange") {
+				stateObj.state = "waiting";
+      			stateObj.stateText = "<%:Changing Connection Mode...%>";
+      			stateObj.actionText = "<%:Abort%>";
+			}
+			
+			setConnectionState(stateObj, true);
+		}
+	}
+	
+	
+	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { connectionstate: 1 },
+		function(x, stateObj)
+		{
+			setConnectionState(stateObj);
+		}
+	);
+
+	function setFrontEndMessage(msg) {
+		if (msg != null && msg != "") {
+			$("#frontEndMessage").text(msg);
+			$("#frontEndMessage").show();
+		} else {
+			$("#frontEndMessage").hide();
+			$("#frontEndMessage").text("");
+		}
+		
+	}	
+
+	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { getmessage: 1 },
+		function(x, msg)
+		{
+			setFrontEndMessage(msg);
+		}
+	);
+
+	function setSelectedServer(server) {
+		src = getImageSrc(server.iso);
+		
+		name = server.name;
+		$("#selectedServerLocation span:eq(0)").text(name);
+
+		$("#selectedServerLocation img").attr("src", src);
+		
+		loc = server.country + ", " + server.city;
+		$("#selectedServerLocation span:eq(1)").text(loc);
+		
+		type = server.servertype;
+		
+		setServerType(type, $("#selectedServerType"));
+	}
+	
+	function setServerType(type, obj) {
+		$(obj).children("span").text(type);
+	
+		starsPerType = {"Free":1, "Premium": 3, "PremiumPlus": 5 }; 
+		numStars = starsPerType[type];
+		
+		i = 0;
+		for (; i < numStars; i++) {
+			$(obj).children("i").eq(i).removeClass().addClass("fa-star fa-lg");	
+		}
+		for (; i < 5; i++) {
+			$(obj).children("i").eq(i).removeClass().addClass("fa-star-empty fa-lg");	
+		}
+	}
+	
+	function addServer(id, server) {
+//aalert(id);
+		if (id < 10) {
+			id = "0" + id;
+		}
+//alert(id);
+
+		templateHtml = $("#serverListTableRowTemplate").children().html();
+	
+		$("#serverListTable").append(templateHtml);
+	
+		var newRow = $("#serverListTable>tbody tr:last-child");
+		$(newRow).addClass("server-"+id); 
+		$(newRow).find("td:first-child").attr("data-text",id);
+		src = getImageSrc(server.iso);
+		var img = $(newRow).children(".flag").children("img");
+		
+		var serverName = $(newRow).children(".flag").children("span");
+		serverName.html("<br />" + server.name);
+		
+		$(img).attr("src", src);
+		$(newRow).children(".location").text(server.country + ", " + server.city);
+	
+		setServerType(server.servertype, $(newRow).children(".type"));
+	
+		actionHref = "<%= build_url("admin/services/shellfirebox") %>/setServerTo/?server="+id;
+		$(newRow).children(".select").children("a").attr("href", actionHref).attr("serverid", id);
+		
+		$(newRow).children(".select").children("a").children("i").css("color", "#0069D6");
+		$(newRow).children(".select").children("a").children("span").css("color", "#0069D6");
+		$(newRow).children(".select").children("a").children("i").removeClass().addClass("fa fa-globe fa-lg");
+		$(newRow).children(".select").children("a").children("span").text("<%:Select Server%>");
+	}
+	
+	function getImageSrc(iso) {
+		return "/luci-static/shellfirebox/country/"+iso+".png";
+	}
+	
+	function setServerList(serverList) {
+		$("#serverListTable>body").html("");
+		
+		$.each(serverList, addServer );
+		
+		$("#serverListTable a").click(function(e) {
+		  e.preventDefault();
+		  $("html, body").animate({ scrollTop: 0 }, "slow");
+		  var serverid = $(this).attr("serverid");
+		  doAction("setServerTo", serverid);
+		  
+		  return false;
+		});
+	}
+	
+	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { selectedserver: 1 },
+		function(x, server)
+		{
+			if (server == null) {
+			  setTimeout(
+				  function() 
+				  {
+				    location.reload();
+				  }, 5000);
+
+			} else {
+				setSelectedServer(server);
+			}
+			
+		}
+	);
+
+	<% require "luci.shellfirebox.ajax_handler" %>
+	$(document).ready(function() {
+		var initialConnectionState = <%= getAjaxConnectionState() %>;
+		setConnectionState(initialConnectionState);
+	
+ 	 	var initialSelectedServer = <%= getAjaxSelectedServer() %>;
+		if (initialSelectedServer == null) {
+			setTimeout(
+			  function() 
+			  {
+			    location.reload();
+			  }, 5000);
+		} else {
+			setSelectedServer(initialSelectedServer);
+		} 	 	
+		
+		var initialServerList = <%= getAjaxServerList() %>;
+		setServerList(initialServerList);
+		var initialFrontEndMessage = <%= getAjaxFrontEndMessage() %>;
+		setFrontEndMessage(initialFrontEndMessage);
+		
+		function displayActiveSliderPosition(value) {
+			value = String(value);
+			switch(value) {
+    			case "0":
+					$("#sliderDescRow .left").css("color", "black");
+                                        $("#sliderDescRow .left2").css("color", "grey");
+					$("#sliderDescRow .middle").css("color","grey");
+					$("#sliderDescRow .right").css("color","grey");  			
+    			
+     				break;
+  				case "1":
+					$("#sliderDescRow .left").css("color", "grey");
+                                        $("#sliderDescRow .left2").css("color", "black");
+					$("#sliderDescRow .middle").css("color","grey");
+					$("#sliderDescRow .right").css("color","grey");  			
+   				
+        			break;
+  				case "2":
+					$("#sliderDescRow .left").css("color", "grey");
+                                        $("#sliderDescRow .left2").css("color", "grey");
+					$("#sliderDescRow .middle").css("color","black");
+					$("#sliderDescRow .right").css("color","grey");  			
+        			break;
+                                case "3":
+                                        $("#sliderDescRow .left").css("color", "grey");
+                                        $("#sliderDescRow .left2").css("color", "grey");
+                                        $("#sliderDescRow .middle").css("color","grey");
+                                        $("#sliderDescRow .right").css("color","black");
+                                break;
+
+			} 			
+		}
+		
+		function setActiveSliderPositionBackend(value) {
+			doAction("connectionModeChange", value)
+		}
+
+		var initialSliderPosition = <%= getAjaxConnectionMode() %>;
+		displayActiveSliderPosition(initialSliderPosition);
+		
+		$("#connectionModeSlider").slider({
+			min: 0,
+			max: 3,
+			value:initialSliderPosition,
+			change: function( event, ui ) {
+				displayActiveSliderPosition(ui.value);
+				setActiveSliderPositionBackend(ui.value);
+			}
+		});
+		
+		$( document ).tooltip();
+		
+		$("#serverListTable").tablesorter( {sortList: [[1,0], [2,1]],  headers: { 3: { sorter:false } }});
+
+		$("#action a").click(function(e) {
+			doAction();
+			e.preventDefault();
+			return false;
+		});
+		 
+	});
+
+//]]></script>
+<link rel="stylesheet" href="/luci-static/shellfirebox/fontello/css/fontello.css">
+<link rel="stylesheet" href="/luci-static/shellfirebox/fontello/css/animation.css">
+<link rel="stylesheet" href="/luci-static/shellfirebox/shellfirebox.css">
+
+<h1><img style="width:30px;" src="/luci-static/shellfirebox/logo.png" /> Shellfire Box</h1>
+<div class="alert-message warning" id="frontEndMessage"></div>
+<fieldset class="cbi-section">
+	<table class="cbi-section-table" id="selectedServerTable">
+		
+		<tr class="cbi-section-table-row">
+			<td id = "selectedServerLocation">
+				<span></span>
+				<br />
+				<img src="" />
+				<br />
+				<span></span>
+			</td>
+			<td id = "selectedServerType">
+				<span></span>
+				<br />
+				<i></i>
+				<i></i>
+				<i></i>
+				<i></i>
+				<i></i>
+			</td>
+			<td id = "connectionstate">
+				<i></i>
+				<br />
+				<span></span>
+			</td>
+			<td id="action">
+				<a href="" class="btn">
+					<i></i>
+					<span></span>
+				</a>
+			</td>
+
+		</tr>
+
+	</table>
+</fieldset>
+
+<h2><%:Connection Settings%></h2>
+	<p>
+		<%:If the connection fails, move the slider to the right. For higher speed, move the slider more to the left.%>
+	</p>
+	<table id="sliderTable">
+		<tr> 
+			<td class="slider-outer "><span class="alert-message info"><%:Fast%></td>		
+			<td><div id="connectionModeSlider"></div></td>		
+			<td class="slider-outer "><span class="alert-message info"><%:Slow%></td>		
+		</tr>
+		<tr id="sliderDescRow">
+			<td></td>		
+			<td>
+                                <div class="left" title="<%:Super fast but highly experimental%>">
+                                        <%:Wireguard%>
+                                        <span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" alt="<%:Help:%>"></span>
+                                </div>
+
+				<div class="left2" title="<%:Best option in most cases%>">
+					<%:UDP Connection%>
+					<span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" alt="<%:Help:%>"></span>
+				</div>
+				<div class="middle" title="<%:Try this if fast connection is being blocked%>">
+					<%:TCP Connection%>
+					<span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" alt="<%:Help:%>"></span>
+				</div>
+				<div class="right" title="<%:Only required in countries with strong internet censorship like China, Iran etc.%>">
+					<%:Hidden TCP Connection%>
+					<span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" alt="<%:Help:%>"></span>	
+				</div>
+			</td>
+			<td></td>
+		</tr>
+	</table>	
+
+<h2><%:Serverlist%></h2>
+<fieldset class="cbi-section">
+	<table id="serverListTableRowTemplate" style="display:none;">
+		<tr>
+			<td class="flag">
+				<img src = "" />
+				<span></span>
+			</td>
+			<td class="location">
+			</td>
+			<td class="type">
+				<span></span>
+				<br />
+				<i></i>
+				<i></i>
+				<i></i>
+				<i></i>
+				<i></i>
+			</td>
+			<td class="select">
+				<a href="" class="btn">
+					<i></i>
+					<span></span>
+				</a>
+			</td>
+		</tr>	
+	</table>
+
+
+	<table class="cbi-section-table" id="serverListTable">
+		<thead>
+			<th><%:Name%></th>
+			<th><%:Location%></th>
+			<th><%:Type%></th>
+			<th></th>
+		</thead>
+		<tbody>
+		</tbody>
+	
+	</table>
+</fieldset>
+
+<p> 
+  <a class="btn fa fa-wrench" id="sendLogToShellfire" href="<%=build_url("admin/services/shellfirebox/sendLogToShellfire") %>"><%:Send error log to Shellfire for solving connection problems%></a>
+</p>
+
+<%+footer%>

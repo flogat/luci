@@ -1,0 +1,225 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: Shellfire Box\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: Shellfire <florian@shellfire.de>\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.4\n"
+"Language: pt\n"
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:30
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:42
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:48
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:117
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:126
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:130
+msgid "Abort"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:200
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:201
+msgid "Auto Refresh"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:409
+msgid "Best option in most cases"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:47
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:129
+msgid "Changing Connection Mode..."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:41
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:125
+msgid "Changing Server..."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:24
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:61
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:66
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:122
+msgid "Connect"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:35
+msgid "Connected"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:29
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:116
+msgid "Connecting..."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:60
+msgid "Connection Failed"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:391
+msgid "Connection Settings"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox.lua:295
+msgid "Could not send log, message code:"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:163
+msgid "Disable Advanced Mode"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:36
+msgid "Disconnect"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:23
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:121
+msgid "Disconnected"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:165
+msgid "Enable Advanced Mode"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:397
+msgid "Fast"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:214
+msgid "Go to password configuration..."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:406
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:411
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:415
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:419
+msgid "Help:"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:418
+msgid "Hidden TCP Connection"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:393
+msgid ""
+"If the connection fails, move the slider to the right. For higher speed, "
+"move the slider more to the left."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/footer.htm:48
+msgid "Imprint"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:458
+msgid "Location"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox.lua:291
+msgid "Log succesfully sent to Shellfire"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:457
+msgid "Name"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:212
+msgid "No password set!"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:417
+msgid ""
+"Only required in countries with strong internet censorship like China, Iran "
+"etc."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/footer.htm:49
+msgid "Privacy Statement"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:225
+msgid "Select Server"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:469
+msgid "Send error log to Shellfire for solving connection problems"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:426
+msgid "Serverlist"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/controller/shellfirebox.lua:12
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/shellfirebox.lua:23
+msgid "Shellfire Box"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:399
+msgid "Slow"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:65
+msgid "Status Unknown"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:404
+msgid "Super fast but highly experimental"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:171
+msgid "Switch to English"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox/ajax_handler.lua:173
+msgid "Switch to German"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:414
+msgid "TCP Connection"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:213
+msgid ""
+"There is no password set on this router. Please configure a root password to "
+"protect the web interface and enable SSH."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:413
+msgid "Try this if fast connection is being blocked"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:459
+msgid "Type"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:410
+msgid "UDP Connection"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:197
+msgid "Unsaved Changes"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/shellfirebox.lua:285
+msgid "Uploading log..."
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/shellfirebox/main.htm:405
+msgid "Wireguard"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:201
+msgid "off"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/header-bootstrap.htm:200
+msgid "on"
+msgstr ""
+
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/footer.htm:47
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/footer.htm:48
+#: /home/flomint/git/luci/applications/luci-app-shellfirebox/luasrc/view/themes/shellfirebox/footer.htm:49
+msgid "www.shellfire.net"
+msgstr ""
