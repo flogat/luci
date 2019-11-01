@@ -610,12 +610,12 @@ end
 
 function led.sysOn()
   local path = led.getPath()
-  luci.sys.call("echo 0 > " .. path)
+  luci.sys.call("echo 1 > " .. path)
 end
 
 function led.sysOff()
   local path = led.getPath()
-  luci.sys.call("echo 1 > " .. path)
+  luci.sys.call("echo 0 > " .. path)
 end
 
 function led.off()
@@ -671,7 +671,7 @@ function led.hasLed()
 end
 
 function led.getName()
-  return "wt3020:blue:power"
+  return "minibox_v3:green:system"
 end
 
 function led.getPath()
