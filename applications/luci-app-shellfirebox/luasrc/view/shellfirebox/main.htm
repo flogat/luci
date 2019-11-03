@@ -86,7 +86,7 @@
 		
 		$("#connectionstate span").text(stateObj.stateText);
 
-		actionHref = "<%= build_url("admin/services/shellfirebox") %>/"+action;
+		actionHref = "<%= url("admin/services/shellfirebox") %>/"+action;
 		currentAction = action;
 		$("#action a").attr("href", actionHref);
 		$("#action a span").text(stateObj.actionText);
@@ -103,7 +103,7 @@
 		}
 	
 		if (aAction != null) {
-			XHR.get('<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { performAction: 1, action: aAction, param: aParam },
+			XHR.get('<%= url("admin/services/shellfirebox") %>/ajax_handler/', { performAction: 1, action: aAction, param: aParam },
 				function(x, something)
 				{
 					
@@ -135,7 +135,7 @@
 	}
 	
 	
-	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { connectionstate: 1 },
+	XHR.poll(5, '<%= url("admin/services/shellfirebox") %>/ajax_handler/', { connectionstate: 1 },
 		function(x, stateObj)
 		{
 			setConnectionState(stateObj);
@@ -153,7 +153,7 @@
 		
 	}	
 
-	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { getmessage: 1 },
+	XHR.poll(5, '<%= url("admin/services/shellfirebox") %>/ajax_handler/', { getmessage: 1 },
 		function(x, msg)
 		{
 			setFrontEndMessage(msg);
@@ -216,7 +216,7 @@
 	
 		setServerType(server.servertype, $(newRow).children(".type"));
 	
-		actionHref = "<%= build_url("admin/services/shellfirebox") %>/setServerTo/?server="+id;
+		actionHref = "<%= url("admin/services/shellfirebox") %>/setServerTo/?server="+id;
 		$(newRow).children(".select").children("a").attr("href", actionHref).attr("serverid", id);
 		
 		$(newRow).children(".select").children("a").children("i").css("color", "#0069D6");
@@ -244,7 +244,7 @@
 		});
 	}
 	
-	XHR.poll(5, '<%= build_url("admin/services/shellfirebox") %>/ajax_handler/', { selectedserver: 1 },
+	XHR.poll(5, '<%= url("admin/services/shellfirebox") %>/ajax_handler/', { selectedserver: 1 },
 		function(x, server)
 		{
 			if (server == null) {
@@ -466,7 +466,7 @@
 </fieldset>
 
 <p> 
-  <a class="btn fa fa-wrench" id="sendLogToShellfire" href="<%=build_url("admin/services/shellfirebox/sendLogToShellfire") %>"><%:Send error log to Shellfire for solving connection problems%></a>
+  <a class="btn fa fa-wrench" id="sendLogToShellfire" href="<%= url("admin/services/shellfirebox/sendLogToShellfire") %>"><%:Send error log to Shellfire for solving connection problems%></a>
 </p>
 
 <%+footer%>
