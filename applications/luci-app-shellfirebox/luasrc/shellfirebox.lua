@@ -23,7 +23,6 @@ local string = require "string"
 local configname = "shellfirebox"
 local countrytable = require "luci.shellfirebox.countrytable"
 local i18n = require "luci.i18n"
-local blockConnectionStateUpdate = false
 
 local tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select, tostring =
   tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select, tostring
@@ -98,7 +97,7 @@ function setConnectionMode(connectionMode)
     debugger.log("currentConnectionState=" .. currentConnectionState)
 
     setConnectionState("connectionModeChange")
-    blockConnectionStateUpdate = true
+    setBlockConnectionStateUpdate(true)
     if currentConnectionState ~= "processDisconnected" then
       disconnect(true)
     end
@@ -132,7 +131,7 @@ function setConnectionMode(connectionMode)
       ensureWireguardKeySetup()
     end
 
-    blockConnectionStateUpdate = false
+    setBlockConnectionStateUpdate(false)
 
     if reconnect then
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
@@ -339,7 +338,7 @@ end
 
 function abortConnect()
   proc.killAll(" | grep lua | grep connect")
-  blockConnectionStateUpdate = false
+  setBlockConnectionStateUpdate(false)
   debugger.log("abortConnect() - finished")
 end
 
@@ -374,7 +373,7 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
-  blockConnectionStateUpdate = true
+  setBlockConnectionStateUpdate(true)
   disconnect(true)
   luci.sys.exec("sleep 1")
 
@@ -410,7 +409,7 @@ function setServerTo(section)
     refreshObfsProxyDataIfRequired()
   end
 
-  blockConnectionStateUpdate = true
+  setBlockConnectionStateUpdate(false)
 
   if reconnect then
     debugger.log("setServerTo() - was connected before, reconnecting now")
@@ -770,12 +769,12 @@ end
 
 function abortSetServer()
   proc.killAll(" | grep lua | grep setServerTo")
-  blockConnectionStateUpdate = false
+  setBlockConnectionStateUpdate(false)
 end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
-  blockConnectionStateUpdate = false
+  setBlockConnectionStateUpdate(false)
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -1250,7 +1249,7 @@ function setConnectionState(state, parsedResult)
     connect()
   end
 
-  if blockConnectionStateUpdate == true then
+  if getBlockConnectionStateUpdate() == true then
       debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
   else
     debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing updateto ".. tostring(state))
@@ -1263,6 +1262,14 @@ function setConnectionState(state, parsedResult)
   end
 
   debugger.log("setConnectionState("..state..") - finished")
+end
+
+function setBlockConnectionStateUpdate(doblock)
+  setGeneralConfigElement("blockConnectionStateUpdate", doblock)
+end
+
+function getBlockConnectionStateUpdate()
+  return getGeneralConfigElement("blockConnectionStateUpdate")
 end
 
 -- update the list of possible webservice endpoints
