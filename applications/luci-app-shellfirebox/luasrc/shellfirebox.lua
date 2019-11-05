@@ -106,13 +106,15 @@ function setConnectionMode(connectionMode)
     uci:save(configname)
     uci:commit(configname)
 
-    if currentConnectionState == "succesfulConnect" or currentConnectionState == "processConnecting"
-    then
-      debugger.log("setConnectionMode("..connectionMode..") - already connected - disconnecting")
+    if currentConnectionState == "succesfulConnect" then
+      debugger.log("setConnectionMode("..connectionMode..") - already connected - enabling automatic reconnect")
       reconnect = true
-      luci.sys.exec("sleep 1")
+    elseif currentConnectionState == "processConnecting" then 
+      debugger.log("setConnectionMode("..connectionMode..") - already connecting - enabling automatic reconnect and aborting connection attempt")
+      abortConnect()
+      reconnect = true
     else
-      debugger.log("setConnectionMode("..connectionMode..") - not connected, not dis- and re-connecting")
+      debugger.log("setConnectionMode("..connectionMode..") - not connected, not connecting - not enabling automatic reconnect")
     end
 
     -- change protocol if required (protocol can only be changed while not connected to vpn)
@@ -131,7 +133,7 @@ function setConnectionMode(connectionMode)
     setConnectionState("processDisconnected")
 
     if reconnect then
-      debugger.log("setConnectionMode("..connectionMode..") - was connected before - reconnecting")
+      debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
       connect()
     end
 
@@ -533,8 +535,6 @@ function getGeneralConfigElement(element)
 end
 
 function setSingleConfigElement(cnfg, sctn, element, value)
-  debugger.log("setSingleConfigElement("..tostring(cnfg)..", "..tostring(sctn) .. ", "..tostring(element)..", "..tostring(value)..") - start")
-
   local name = getSectionName(cnfg, sctn)
   uci:set(cnfg, name, element, value)
   uci:save(cnfg)
@@ -543,8 +543,6 @@ function setSingleConfigElement(cnfg, sctn, element, value)
   if not result then
     debugger.log("setSingleConfigElement - ERROR: could not write to UCI!")
   end
-
-  debugger.log("setSingleConfigElement("..tostring(cnfg)..", "..tostring(sctn) .. ", "..tostring(element)..", "..tostring(value)..") - finish")
 end
 
 function setGeneralConfigElement(element, value)
@@ -598,14 +596,12 @@ end
 led =  {}
 
 function led.on()
-  debugger.log("led.on() - start()")
   if not led.hasLed() then
     return
   end
 
   led.abortBlink()
   led.sysOn()
-  debugger.log("led.on() - finish()")
 end
 
 function led.sysOn()
@@ -619,31 +615,24 @@ function led.sysOff()
 end
 
 function led.off()
-  debugger.log("led.off() - start()")
   if not led.hasLed() then
     return
   end
 
   led.abortBlink()
   led.sysOff()
-
-  debugger.log("led.off() - finish()")
 end
 
 function led.blinkAsync()
-  debugger.log("led.blinkAsync() . start")
   -- avoid duplicate execution
   led.abortBlink()
   local cmd = "/usr/lib/lua/luci/shellfirebox/ledblink.lua &"
   debugger.log(cmd)
   sys.call(cmd)
-  debugger.log("led.blinkAsync() - finished")
 end
 
 -- should be called asynchronosly only because this blocks
 function led.blink()
-  debugger.log("led.blink() - start()")
-
   if not led.hasLed() then
     return
   end
@@ -654,8 +643,6 @@ function led.blink()
     led.sysOff()
     socket.sleep(0.5)
   end
-
-  debugger.log("led.blink() - finish()")
 end
 
 function led.abortBlink()
