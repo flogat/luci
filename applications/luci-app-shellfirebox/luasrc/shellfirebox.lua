@@ -23,6 +23,7 @@ local string = require "string"
 local configname = "shellfirebox"
 local countrytable = require "luci.shellfirebox.countrytable"
 local i18n = require "luci.i18n"
+local blockConnectionStateUpdate = false
 
 local tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select, tostring =
   tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select, tostring
@@ -97,6 +98,7 @@ function setConnectionMode(connectionMode)
     debugger.log("currentConnectionState=" .. currentConnectionState)
 
     setConnectionState("connectionModeChange")
+    blockConnectionStateUpdate = true
     if currentConnectionState ~= "processDisconnected" then
       disconnect(true)
     end
@@ -130,11 +132,13 @@ function setConnectionMode(connectionMode)
       ensureWireguardKeySetup()
     end
 
-    setConnectionState("processDisconnected")
+    blockConnectionStateUpdate = false
 
     if reconnect then
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
       connect()
+    else
+      setConnectionState("processDisconnected")
     end
 
   else
@@ -335,6 +339,7 @@ end
 
 function abortConnect()
   proc.killAll(" | grep lua | grep connect")
+  blockConnectionStateUpdate = false
   debugger.log("abortConnect() - finished")
 end
 
@@ -369,6 +374,7 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
+  blockConnectionStateUpdate = true
   disconnect(true)
   luci.sys.exec("sleep 1")
 
@@ -403,6 +409,8 @@ function setServerTo(section)
     refreshCertificatesIfRequired()
     refreshObfsProxyDataIfRequired()
   end
+
+  blockConnectionStateUpdate = true
 
   if reconnect then
     debugger.log("setServerTo() - was connected before, reconnecting now")
@@ -595,6 +603,18 @@ end
 
 led =  {}
 
+function led.handleUpdatedConnectionState(state)
+    if state == "processConnecting" or state == "connectionModeChange" or state == "processRestarting"  or state == "serverChange" then
+      led.blinkAsync()
+    elseif state == "succesfulConnect" then
+      led.on()
+    elseif state == "processDisconnected" then
+      led.off()
+    else
+      led.off()
+    end
+end
+
 function led.on()
   if not led.hasLed() then
     return
@@ -750,11 +770,12 @@ end
 
 function abortSetServer()
   proc.killAll(" | grep lua | grep setServerTo")
+  blockConnectionStateUpdate = false
 end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
-
+  blockConnectionStateUpdate = false
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -1222,42 +1243,23 @@ end
 function setConnectionState(state, parsedResult)
   debugger.log("setConnectionState("..tostring(state)..", " .. tostring(parsedResult) .. ") - start")
 
-  local performUpdate = true
-  -- if parser identifies disconnect, but we are changing server or connection mode then dont update the connectionstate again
-  if parsedResult == true then
-    local currentState = getConnectionState()
-    if state == "processDisconnected" and (currentState == "connectionModeChange" or currentState == "serverChange") then
-      debugger.log("setConnectionState() - parsedResult is processDisconnected, but currentState == " .. tostring(currentState) .. ", not updating connection state")
-      performUpdate = false
-    else
-      debugger.log("setConnectionState() - parsedresult is processDisconnected, currentState == " .. tostring(currentState) .. ", performing regular update of connection state")
-    end
-  end
-
+  local currentState = getConnectionState()
   if state == "failedPassPhrase" then
     refreshOpenVpnParams()
     refreshVpn()
     connect()
   end
 
-  if performUpdate then
-    debugger.log("setConnectionState() - performUpdate is true, performing update")
+  if blockConnectionStateUpdate == true then
+      debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
+  else
+    debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing updateto ".. tostring(state))
+    led.handleUpdatedConnectionState(state)
 
-    if state == "processConnecting" or state == "connectionModeChange" or state == "processRestarting"  or state == "serverChange" then
-      led.blinkAsync()
-    elseif state == "succesfulConnect" then
-      -- enableKillswitch()
-      led.on()
+    if state == "succesfulConnect" then
       webServiceAliasMeasurePerformanceAllAsync()
-    elseif state == "processDisconnected" then
-      led.off()
-    else
-      led.off()
     end
-    
     setGeneralConfigElement("connectionstate", state)
-
-    debugger.log("setConnectionState() - tried to commit changes to uci, setting new connectionstate to ".. tostring(state))
   end
 
   debugger.log("setConnectionState("..state..") - finished")
