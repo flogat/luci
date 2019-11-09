@@ -97,7 +97,6 @@ function setConnectionMode(connectionMode)
     debugger.log("currentConnectionState=" .. currentConnectionState)
 
     setConnectionState("connectionModeChange")
-    setBlockConnectionStateUpdate(true)
     if currentConnectionState ~= "processDisconnected" then
       disconnect(true)
     end
@@ -130,8 +129,6 @@ function setConnectionMode(connectionMode)
       debugger.log("changing to wireguard, updating server public key and own internal-ip")
       ensureWireguardKeySetup()
     end
-
-    setBlockConnectionStateUpdate(false)
 
     if reconnect then
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
@@ -338,7 +335,6 @@ end
 
 function abortConnect()
   proc.killAll(" | grep lua | grep connect")
-  setBlockConnectionStateUpdate(false)
   debugger.log("abortConnect() - finished")
 end
 
@@ -373,7 +369,6 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
-  setBlockConnectionStateUpdate(true)
   disconnect(true)
   luci.sys.exec("sleep 1")
 
@@ -408,8 +403,6 @@ function setServerTo(section)
     refreshCertificatesIfRequired()
     refreshObfsProxyDataIfRequired()
   end
-
-  setBlockConnectionStateUpdate(false)
 
   if reconnect then
     debugger.log("setServerTo() - was connected before, reconnecting now")
@@ -769,12 +762,10 @@ end
 
 function abortSetServer()
   proc.killAll(" | grep lua | grep setServerTo")
-  setBlockConnectionStateUpdate(false)
 end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
-  setBlockConnectionStateUpdate(false)
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -1249,27 +1240,14 @@ function setConnectionState(state, parsedResult)
     connect()
   end
 
-  if getBlockConnectionStateUpdate() == true then
-      debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
-  else
-    debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing updateto ".. tostring(state))
-    led.handleUpdatedConnectionState(state)
-
-    if state == "succesfulConnect" then
-      webServiceAliasMeasurePerformanceAllAsync()
-    end
-    setGeneralConfigElement("connectionstate", state)
+  debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing updateto ".. tostring(state))
+  led.handleUpdatedConnectionState(state)
+  if state == "succesfulConnect" then
+    webServiceAliasMeasurePerformanceAllAsync()
   end
-
+  setGeneralConfigElement("connectionstate", state)
+  
   debugger.log("setConnectionState("..state..") - finished")
-end
-
-function setBlockConnectionStateUpdate(doblock)
-  setGeneralConfigElement("blockConnectionStateUpdate", doblock)
-end
-
-function getBlockConnectionStateUpdate()
-  return getGeneralConfigElement("blockConnectionStateUpdate")
 end
 
 -- update the list of possible webservice endpoints
