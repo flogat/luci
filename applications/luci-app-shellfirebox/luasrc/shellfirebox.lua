@@ -97,6 +97,7 @@ function setConnectionMode(connectionMode, reconnect)
     debugger.log("currentConnectionState=" .. currentConnectionState)
 
     setConnectionState("connectionModeChange")
+    setBlockConnectionStateUpdate(true)
 
     if currentConnectionState ~= "processDisconnected" then
       disconnect(true)
@@ -109,11 +110,9 @@ function setConnectionMode(connectionMode, reconnect)
 
     if currentConnectionState == "succesfulConnect" then
       debugger.log("setConnectionMode("..connectionMode..") - already connected - enabling automatic reconnect")
-      setBlockConnectionStateUpdate(true)
       reconnect = true
     elseif currentConnectionState == "processConnecting" then 
       debugger.log("setConnectionMode("..connectionMode..") - already connecting - enabling automatic reconnect and aborting connection attempt")
-      setBlockConnectionStateUpdate(true)
       abortConnect()
       reconnect = true
     else
@@ -138,6 +137,7 @@ function setConnectionMode(connectionMode, reconnect)
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
       connect()
     else
+      setBlockConnectionStateUpdate(false)
       setConnectionState("processDisconnected")
     end
 
@@ -374,7 +374,8 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
-  
+  setBlockConnectionStateUpdate(true)
+
   disconnect(true)
   luci.sys.exec("sleep 1")
 
@@ -382,7 +383,6 @@ function setServerTo(section)
   if currentConnectionState == "succesfulConnect" or currentConnectionState == "processConnecting"
   then
     debugger.log("setServerTo() - was already connected, reconnecting later. currentConnectionState = " .. currentConnectionState)
-    setBlockConnectionStateUpdate(true)
     reconnect = true
   else
     debugger.log("setServerTo() - was not already connected, not reconnecting later. currentConnectionState = " .. currentConnectionState)
@@ -415,6 +415,7 @@ function setServerTo(section)
     debugger.log("setServerTo() - was connected before, reconnecting now")
     connect()
   else
+    setBlockConnectionStateUpdate(false)
     setConnectionState("processDisconnected")
   end
 
@@ -768,7 +769,6 @@ function api.call(action, params, aliasId)
 end
 
 function abortSetServer()
-  setBlockConnectionStateUpdate(false)
   proc.killAll(" | grep lua | grep setServerTo")
 end
 
@@ -1253,7 +1253,8 @@ function setConnectionState(state, parsedResult)
     setBlockConnectionStateUpdate(false)
   end
 
-  if getBlockConnectionStateUpdate() == true then
+  local doBlockStateUpdate = getBlockConnectionStateUpdate()
+  if doBlockStateUpdate == true then
       debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
   else
     debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing update to ".. tostring(state))
@@ -1269,11 +1270,18 @@ function setConnectionState(state, parsedResult)
 end
 
 function setBlockConnectionStateUpdate(doblock)
-  setGeneralConfigElement("blockConnectionStateUpdate", doblock)
+  local val = 0
+  if doblock == true then
+    val = 1
+  else
+    val = 0
+  end
+  setGeneralConfigElement("blockConnectionStateUpdate", val)
 end
 
 function getBlockConnectionStateUpdate()
-  return getGeneralConfigElement("blockConnectionStateUpdate")
+  result = getGeneralConfigElement("blockConnectionStateUpdate") == "1"
+  return result
 end
 
 -- update the list of possible webservice endpoints

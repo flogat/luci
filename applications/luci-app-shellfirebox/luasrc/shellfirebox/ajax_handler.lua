@@ -137,9 +137,6 @@ function handleAjax()
     elseif luci.http.formvalue("action") == "connect" then
       shellfirebox.connectAsync()
     elseif luci.http.formvalue("action") == "setServerTo" then
-      shellfirebox.setConnectionState("serverChange")
-      shellfirebox.setBlockConnectionStateUpdate(true)
-
       local serverId = luci.http.formvalue("param")
       shellfirebox.setServerToAsync(serverId)
     elseif luci.http.formvalue("action") == "connectionModeChange" then
