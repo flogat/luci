@@ -205,7 +205,6 @@ function getWireguardPrivateKeyClient()
 
   local privateKey = fs.readfile("/etc/keys-wireguard.key")
 
-  debugger.log("getWireguardPrivateKeyClient() - returning privateKey=" .. tostring(privateKey))
   return privateKey
 end
 
@@ -1058,7 +1057,6 @@ function connectWireguard()
  
   debugger.log("uci set network.@wireguard_wg0[0].public_key=" .. tostring(wireguardPublicKeyServer))
   debugger.log("uci set network.@wireguard_wg0[0].endpoint_host=" .. serverHost)
-  debugger.log("uci set network.wg0.private_key=" .. wireguardPrivateKeyClient)
   debugger.log("uci set network.wg0.addresses=" .. internalIP)
 
   debugger.log("uci commit")
@@ -1249,7 +1247,7 @@ function setConnectionState(state, parsedResult)
   end
 
   -- after succesful connect, info needs to be displayed to user
-  if state == "succesfulConnect" then
+  if state == "succesfulConnect" or state == "generalError" then
     setBlockConnectionStateUpdate(false)
   end
 
