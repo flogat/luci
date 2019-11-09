@@ -1150,7 +1150,7 @@ function connectOpenVpn()
     luci.sys.call(obfsproxystart)
 
     local paramsToAdd = " --route " .. remoteHost .. " 255.255.255.255 net_gateway"
-    paramsToAdd = paramsToAdd .. " --connect-proxy-retry 1 --socks-proxy 127.0.0.1 " .. obfsProxyLocalPort
+    paramsToAdd = paramsToAdd .. " --connect-retry-max 1 --socks-proxy 127.0.0.1 " .. obfsProxyLocalPort
 
     debugger.log("adding params to openvpn start command: " .. paramsToAdd)
     allparams = allparams .. paramsToAdd
