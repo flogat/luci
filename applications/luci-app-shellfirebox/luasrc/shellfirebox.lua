@@ -84,7 +84,7 @@ end
 
 -- Set the connectionmode
 -- 0 = Wireguard, 1 = UDP; 2=TCP; 3=obfsproxy over TCP
-function setConnectionMode(connectionMode)
+function setConnectionMode(connectionMode, reconnect)
   debugger.log("setConnectionMode("..connectionMode..") - start")
 
   local oldConnectionMode = getConnectionMode()
@@ -97,6 +97,7 @@ function setConnectionMode(connectionMode)
     debugger.log("currentConnectionState=" .. currentConnectionState)
 
     setConnectionState("connectionModeChange")
+
     if currentConnectionState ~= "processDisconnected" then
       disconnect(true)
     end
@@ -108,9 +109,11 @@ function setConnectionMode(connectionMode)
 
     if currentConnectionState == "succesfulConnect" then
       debugger.log("setConnectionMode("..connectionMode..") - already connected - enabling automatic reconnect")
+      setBlockConnectionStateUpdate(true)
       reconnect = true
     elseif currentConnectionState == "processConnecting" then 
       debugger.log("setConnectionMode("..connectionMode..") - already connecting - enabling automatic reconnect and aborting connection attempt")
+      setBlockConnectionStateUpdate(true)
       abortConnect()
       reconnect = true
     else
@@ -131,6 +134,7 @@ function setConnectionMode(connectionMode)
     end
 
     if reconnect then
+
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
       connect()
     else
@@ -334,6 +338,7 @@ function refreshOpenVpnParams()
 end
 
 function abortConnect()
+  setBlockConnectionStateUpdate(false)
   proc.killAll(" | grep lua | grep connect")
   debugger.log("abortConnect() - finished")
 end
@@ -369,6 +374,7 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
+  
   disconnect(true)
   luci.sys.exec("sleep 1")
 
@@ -376,6 +382,7 @@ function setServerTo(section)
   if currentConnectionState == "succesfulConnect" or currentConnectionState == "processConnecting"
   then
     debugger.log("setServerTo() - was already connected, reconnecting later. currentConnectionState = " .. currentConnectionState)
+    setBlockConnectionStateUpdate(true)
     reconnect = true
   else
     debugger.log("setServerTo() - was not already connected, not reconnecting later. currentConnectionState = " .. currentConnectionState)
@@ -761,6 +768,7 @@ function api.call(action, params, aliasId)
 end
 
 function abortSetServer()
+  setBlockConnectionStateUpdate(false)
   proc.killAll(" | grep lua | grep setServerTo")
 end
 
