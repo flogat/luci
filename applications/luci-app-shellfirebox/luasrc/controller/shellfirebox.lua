@@ -39,6 +39,8 @@ function disconnect()
 end
 
 function abort()
+  shellfirebox.setBlockConnectionStateUpdate(false)
+
   -- if changing server, abort the server change
   if shellfirebox.getConnectionState() == "serverChange" then
     shellfirebox.abortSetServer()
@@ -50,6 +52,11 @@ function abort()
 end
 
 function setServerTo()
+  shellfirebox.setConnectionState("serverChange")
+  if shellfirebox.getConnectionState() == "succesfulConnect" or shellfirebox.getConnectionState() == "processConnecting" then
+    shellfirebox.setBlockConnectionStateUpdate(true)
+  end
+
   local serverId = luci.http.formvalue("server")
   shellfirebox.setServerToAsync(serverId)
   luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))

@@ -1240,14 +1240,32 @@ function setConnectionState(state, parsedResult)
     connect()
   end
 
-  debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing updateto ".. tostring(state))
-  led.handleUpdatedConnectionState(state)
+  -- after succesful connect, info needs to be displayed to user
   if state == "succesfulConnect" then
-    webServiceAliasMeasurePerformanceAllAsync()
+    setBlockConnectionStateUpdate(false)
   end
-  setGeneralConfigElement("connectionstate", state)
-  
+
+  if getBlockConnectionStateUpdate() == true then
+      debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
+  else
+    debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing update to ".. tostring(state))
+    led.handleUpdatedConnectionState(state)
+
+    if state == "succesfulConnect" then
+      webServiceAliasMeasurePerformanceAllAsync()
+    end
+    setGeneralConfigElement("connectionstate", state)
+  end
+
   debugger.log("setConnectionState("..state..") - finished")
+end
+
+function setBlockConnectionStateUpdate(doblock)
+  setGeneralConfigElement("blockConnectionStateUpdate", doblock)
+end
+
+function getBlockConnectionStateUpdate()
+  return getGeneralConfigElement("blockConnectionStateUpdate")
 end
 
 -- update the list of possible webservice endpoints

@@ -126,6 +126,7 @@ function handleAjax()
 
   if luci.http.formvalue("performAction") == "1" then
     if luci.http.formvalue("action") == "abort" then
+      shellfirebox.setBlockConnectionStateUpdate(false)
       shellfirebox.abortSetServer()
       shellfirebox.abortSetConnectionMode()
       shellfirebox.disableKillswitch()
@@ -135,12 +136,23 @@ function handleAjax()
       shellfirebox.disableKillswitch()
       shellfirebox.disconnect()
     elseif luci.http.formvalue("action") == "connect" then
-      
       shellfirebox.connectAsync()
     elseif luci.http.formvalue("action") == "setServerTo" then
+      shellfirebox.setConnectionState("serverChange")
+
+      if shellfirebox.getConnectionState() == "succesfulConnect" or shellfirebox.getConnectionState() == "processConnecting" then
+        shellfirebox.setBlockConnectionStateUpdate(true)
+      end
+
       local serverId = luci.http.formvalue("param")
       shellfirebox.setServerToAsync(serverId)
     elseif luci.http.formvalue("action") == "connectionModeChange" then
+      shellfirebox.setConnectionState("connectionModeChange")
+
+      if shellfirebox.getConnectionState() == "succesfulConnect" or shellfirebox.getConnectionState() == "processConnecting" then
+        shellfirebox.setBlockConnectionStateUpdate(true)
+      end
+
       local connectionMode = luci.http.formvalue("param")
       shellfirebox.setConnectionModeAsync(connectionMode)
     elseif luci.http.formvalue("action") == "setLanguage" then
