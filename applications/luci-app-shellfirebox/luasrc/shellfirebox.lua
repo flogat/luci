@@ -664,6 +664,20 @@ function led.blink()
   end
 end
 
+-- should be called asynchronosly only because this blocks
+function led.blinkfast()
+  if not led.hasLed() then
+    return
+  end
+
+  while true do
+    led.sysOn()
+    socket.sleep(0.1)
+    led.sysOff()
+    socket.sleep(0.1)
+  end
+end
+
 function led.abortBlink()
   proc.killAll(" | grep lua | grep ledblink")
 end
