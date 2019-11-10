@@ -703,9 +703,7 @@ function api.call(action, params, aliasId)
     ["X-Authorization-Token"]   = uid;
     ["Content-Length"] = tostring(#requestbody)
   }
-  debugger.log("api.call - headers [---------]")
-  debugger.log(headers)
-  debugger.log("[---------] api.call - headers")
+  debugger.log("X-Authorization-Token = " .. uid)
 
   if params ~= nil and not action == "sendLog" then
     debugger.log("api.call - params [---------]")
@@ -1054,13 +1052,6 @@ function connectWireguard()
 
   local internalIP = vpn.sWireguardIP
   local serverHost = vpn.sListenHost
- 
-  debugger.log("uci set network.@wireguard_wg0[0].public_key=" .. tostring(wireguardPublicKeyServer))
-  debugger.log("uci set network.@wireguard_wg0[0].endpoint_host=" .. serverHost)
-  debugger.log("uci set network.wg0.addresses=" .. internalIP)
-
-  debugger.log("uci commit")
-
 
   luci.sys.exec("uci set network.@wireguard_wg0[0].public_key=" .. tostring(wireguardPublicKeyServer))
   luci.sys.exec("uci set network.@wireguard_wg0[0].endpoint_host=" .. serverHost)
@@ -1189,7 +1180,7 @@ function getServerById(serverId)
   local result
   uci:foreach(configname, "server",
     function(server)
-      if server.vpnServerId == serverId then
+      if server.vpnServerId == tostring(serverId) then
         result = server
       end
     end
@@ -1247,7 +1238,7 @@ function setConnectionState(state, parsedResult)
   end
 
   -- after succesful connect, info needs to be displayed to user
-  if state == "succesfulConnect" or state == "generalError" then
+  if state == "succesfulConnect" or state == "generalError" or state == "connecting" then
     setBlockConnectionStateUpdate(false)
   end
 
