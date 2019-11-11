@@ -7,20 +7,19 @@ local string = require "string"
 local uci = require "luci.model.uci".cursor()
 local shellfirebox = require "luci.shellfirebox"
 
+function isWanConnected()
+  local wan_dump = io.popen("cat /sys/class/net/eth0/carrier")
 
-function parseLine(openvpnoutput)
-  debugger.log(openvpnoutput)
-  for msgcode, stringtable in pairs(definitions) do
-
-    for i, msgstring in ipairs(stringtable) do
-      -- if openvpnoutput contains errrorstring write errorcode to uci
-      if string.find(openvpnoutput, msgstring) then
-        debugger.log("found match for " .. msgcode)
-        shellfirebox.setConnectionState(msgcode, true)
-
+  if wan_dump then
+    local line
+    for line in wan_dump:lines() do
+      if line == "1" then
+        return true
       end
     end
   end
+
+  return false
 end
 
 function getWireguardStatus()
@@ -69,26 +68,32 @@ end
 
 
 
-local lastdata
 local data
+local wanconnected
+local currentStatusConnected
 
 while true do
   data = getWireguardStatus()
+  wanconnected = isWanConnected()
+  currentStatusConnected = shellfirebox.getConnectionState() == "succesfulConnect"
 
-  if lastdata == nil and data ~= nil then
+  if currentStatusConnected == false and wanconnected == true and data ~= nil then
     debugger.log("connection state change detected, now connected!")
     shellfirebox.setConnectionState("succesfulConnect", true)
   end
 
-  if lastdata ~= nil and data == nil then
+  if currentStatusConnected == true and data == nil then
     debugger.log("connection state change detected, now disconnected!")
     shellfirebox.setConnectionState("processDisconnected", true)
-    break
   end
 
-  lastdata = data  
+  if currentStatusConnected == true and wanconnected == false then
+    debugger.log("wan not connected anymore, now disconnected!")
+    shellfirebox.setConnectionState("processDisconnected", true)
+  end
 
   luci.sys.exec("sleep 1")
+
 end
 
 
