@@ -126,10 +126,16 @@ function handleAjax()
 
   if luci.http.formvalue("performAction") == "1" then
     if luci.http.formvalue("action") == "abort" then
-      shellfirebox.abortSetServer()
-      shellfirebox.abortSetConnectionMode()
-      shellfirebox.disableKillswitch()
-      shellfirebox.disconnect()
+      -- if changing server, abort the server change
+      if shellfirebox.getConnectionState() == "serverChange" then
+        shellfirebox.abortSetServer()
+      elseif shellfirebox.getConnectionState() == "connectionModeChange" then
+        shellfirebox.abortSetConnectionMode()
+      else
+        -- otherwise kill the openvpn process / disconnect
+        shellfirebox.abortConnect()
+        shellfirebox.disconnect()
+     end
 
     elseif luci.http.formvalue("action") == "disconnect" then
       shellfirebox.disableKillswitch()
@@ -137,6 +143,7 @@ function handleAjax()
     elseif luci.http.formvalue("action") == "connect" then
       shellfirebox.connectAsync()
     elseif luci.http.formvalue("action") == "setServerTo" then
+
       local serverId = luci.http.formvalue("param")
       shellfirebox.setServerToAsync(serverId)
     elseif luci.http.formvalue("action") == "connectionModeChange" then

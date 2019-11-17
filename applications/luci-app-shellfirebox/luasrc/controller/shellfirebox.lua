@@ -42,11 +42,15 @@ function abort()
   -- if changing server, abort the server change
   if shellfirebox.getConnectionState() == "serverChange" then
     shellfirebox.abortSetServer()
+  elseif shellfirebox.getConnectionState() == "connectionModeChange" then
+    shellfirebox.abortSetConnectionMode()
   else
-    -- otherwise kill the openvpn process / disconnect
+    -- otherwise currently connecting, then abort connect and disconnect thereafter to make sure it worked.
+    shellfirebox.abortConnect()
     shellfirebox.disconnect()
-   end
-   luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
+ end
+
+ luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
 end
 
 function setServerTo()
