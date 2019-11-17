@@ -337,8 +337,16 @@ function refreshOpenVpnParams()
 end
 
 function abortConnect()
+  local level = 15
+
+  local connectionMode = tostring(getConnectionMode())
+  if connectionMode == "0" then
+    level = 1
+  end
+
+  proc.killAll(" | grep lua | grep connect", level)
   setBlockConnectionStateUpdate(false)
-  proc.killAll(" | grep lua | grep connect")
+  setConnectionState("processDisconnected")
   debugger.log("abortConnect() - finished")
 end
 
@@ -1569,8 +1577,9 @@ function proc.getPid(pattern)
   return pid
 end
 
-function proc.killAll(pattern)
+function proc.killAll(pattern, level)
   local pid = proc.getPid(pattern)
+  level = level or 15
 
   if pid and pid ~= "" and #pid > 0
   then
@@ -1579,7 +1588,7 @@ function proc.killAll(pattern)
     for i, k in pairs(pidTable) do
       if k and k ~= "" and #k > 0
       then
-        sys.process.signal(k,15)
+        sys.process.signal(k,level)
       end
     end
   end
