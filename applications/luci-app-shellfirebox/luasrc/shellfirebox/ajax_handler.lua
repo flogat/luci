@@ -134,8 +134,8 @@ function handleAjax()
       else
         -- otherwise kill the openvpn process / disconnect
         shellfirebox.abortConnect()
---        luci.sys.exec("sleep 10")
---        shellfirebox.disconnect()
+        luci.sys.exec("sleep 5")
+        shellfirebox.disconnect()
      end
 
     elseif luci.http.formvalue("action") == "disconnect" then

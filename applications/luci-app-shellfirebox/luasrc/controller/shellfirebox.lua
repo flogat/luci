@@ -47,8 +47,8 @@ function abort()
   else
     -- otherwise currently connecting, then abort connect and disconnect thereafter to make sure it worked.
     shellfirebox.abortConnect()
---    luci.sys.exec("sleep 10")
---    shellfirebox.disconnect()
+    luci.sys.exec("sleep 5")
+    shellfirebox.disconnect()
  end
 
  luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
