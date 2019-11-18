@@ -299,7 +299,7 @@ function sendLogToShellfire()
     end
 
     if fs.isfile(filename) then
-      log_content = log_content .. "\r\n+++++++++++++++++++++++++++++++++++++++++++++++++\r\n+++++++++++++CONTENT FROM " .. filename .. " ++++++++++++++\r\n"
+      log_content = log_content .. "\r\n\r\n\r\n+++++++++++++++++++++++++++++++++++++++++++++++++\r\n+++++++++++++ CONTENT FROM " .. filename .. " ++++++++++++++\r\n\r\n"
       log_content = log_content .. fs.readfile(filename)
     end
   end
