@@ -288,8 +288,23 @@ end
 
 function sendLogToShellfire()
   setFrontEndMessage(i18n.translate("Uploading log..."))
-  local log_content = base64.enc(fs.readfile("/tmp/syslog.log"))
+  local log_content = ""
 
+  for i=8,0,-1 do
+    local filename
+    if i > 0 then
+      filename = "/tmp/syslog.log." .. tostring(i)
+    else
+      filename = "/tmp/syslog.log"
+    end
+
+    if fs.isfile(filename) then
+      log_content = log_content .. "\r\n+++++++++++++++++++++++++++++++++++++++++++++++++\r\n+++++++++++++CONTENT FROM " .. filename .. " ++++++++++++++\r\n"
+      log_content = log_content .. fs.readfile(filename)
+    end
+  end
+
+  log_content = base64.enc(log_content)
   local result, message = api.call("sendLog", {log = log_content})
 
   if result == true then
