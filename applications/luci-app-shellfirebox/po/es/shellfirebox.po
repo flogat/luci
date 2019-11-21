@@ -159,7 +159,7 @@ msgid "Uploading log..."
 msgstr "Cargando registro..."
 
 msgid "Wireguard"
-msgstr "Jaula de protección"
+msgstr "Wireguard"
 
 msgid "off"
 msgstr "Apagado"
