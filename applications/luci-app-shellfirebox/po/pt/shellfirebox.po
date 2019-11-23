@@ -42,7 +42,7 @@ msgid "Could not send log, message code:"
 msgstr "Não foi possível enviar o registro, código de mensagem:"
 
 msgid "Disable Advanced Mode"
-msgstr "Desativar Modo Avançado"
+msgstr "Desativar o Modo Avançado"
 
 msgid "Disconnect"
 msgstr "Desconectar"
@@ -51,7 +51,7 @@ msgid "Disconnected"
 msgstr "Desconectado"
 
 msgid "Enable Advanced Mode"
-msgstr "Ativar Modo Avançado"
+msgstr "Ativar o Modo Avançado"
 
 msgid "Fast"
 msgstr "Rápido"
