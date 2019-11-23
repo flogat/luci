@@ -75,17 +75,16 @@ msgid ""
 "If the connection fails, move the slider to the right. For higher speed, "
 "move the slider more to the left."
 msgstr ""
-"Si la connexion échoue, faites glisser vers la droite. Pour une vitesse "
-"améliorée, faites glisser vers la gauche. "
+"Si la connexion échoue, déplacez vers la droite. Pour une vitesse supérieure, déplacez vers la gauche."
 
 msgid "Imprint"
-msgstr "Impression"
+msgstr "Mentions légales"
 
 msgid "Location"
 msgstr "Emplacement"
 
 msgid "Log succesfully sent to Shellfire"
-msgstr "Journal envoyé à Shellfire avec succès"
+msgstr "Envoi du journal à Shellfire réussi"
 
 msgid "Name"
 msgstr "Nom"
@@ -107,7 +106,7 @@ msgid "OpenVPN UDP"
 msgstr "OpenVPN UDP"
 
 msgid "Privacy Statement"
-msgstr "Politique de confidentialité"
+msgstr "Déclaration de protection des données"
 
 msgid "Select Server"
 msgstr "Choisir un serveur"
@@ -143,7 +142,7 @@ msgid ""
 "protect the web interface and enable SSH."
 msgstr ""
 "Il n'y a pas de mot de passe configuré sur ce routeur. Merci de configurer "
-"un mot de passe racine pour protéger l'interface et autoriser le SSH"
+"un mot de passe root pour protéger l'interface et autoriser le SSH"
 
 msgid "Try this if Wireguard and OpenVPN UDP are being blocked"
 msgstr "Essayez ceci si Wireguard et OpenVPN UDP sont bloqués"
@@ -155,7 +154,7 @@ msgid "Unsaved Changes"
 msgstr "Changement non sauvegardés"
 
 msgid "Uploading log..."
-msgstr "Mise en ligne du journal..."
+msgstr "Transfer du journal..."
 
 msgid "Wireguard"
 msgstr "WireGuard"
