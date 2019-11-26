@@ -55,7 +55,7 @@ msgid "Disconnected"
 msgstr "Desconectado"
 
 msgid "Enable Advanced Mode"
-msgstr "Activar Modo Avanzado"
+msgstr "Habilitar modo avanzado"
 
 msgid "Fast"
 msgstr "Rápido"
