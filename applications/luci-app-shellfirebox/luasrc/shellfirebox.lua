@@ -492,6 +492,12 @@ function refreshCertificatesIfRequired()
 
     if #keyDirContentTable <= 2 then
       req = true
+    else
+      local vpn = getVpn()
+      local vpnId = vpn.iVpnId
+      if not fs.isfile("/etc/keys/sf" .. vpnId .. ".crt") then
+        req = true
+      end
     end
 
   end
@@ -1268,9 +1274,10 @@ function setConnectionState(state, parsedResult)
   debugger.log("setConnectionState("..tostring(state)..", " .. tostring(parsedResult) .. ") - start")
 
   local currentState = getConnectionState()
-  if state == "failedPassPhrase" then
+  if state == "failedPassPhrase" or state == "certificateInvalid" then
     refreshOpenVpnParams()
     refreshVpn()
+    refreshCertificates()
     connect()
   end
 
