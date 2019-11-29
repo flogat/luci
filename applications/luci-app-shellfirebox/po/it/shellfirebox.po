@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 2.2.4\n"
 
 msgid "Abort"
 msgstr "Interrompi"
@@ -57,10 +57,10 @@ msgid "Fast"
 msgstr "Veloce"
 
 msgid "Fast and well tested"
-msgstr "Veloce e ben collaudato"
+msgstr "Veloce e ben collaudata"
 
 msgid "Fastest, but still experimental"
-msgstr "Il più veloce, ma ancora sperimentale"
+msgstr "La più veloce, ma ancora sperimentale"
 
 msgid "Go to password configuration..."
 msgstr "Vai alla configurazione della password..."
@@ -69,14 +69,14 @@ msgid "Help:"
 msgstr "Aiuto:"
 
 msgid "Hidden OpenVPN TCP"
-msgstr "OpenVPN TCP nascosto"
+msgstr "OpenVPN TCP nascosta"
 
 msgid ""
 "If the connection fails, move the slider to the right. For higher speed, "
 "move the slider more to the left."
 msgstr ""
-"Se la connessione fallisce, sposta il cursore a destra. Per una maggiore "
-"velocità, sposta il cursore più a sinistra."
+"Se la connessione non riesce sposta il cursore verso destra. Per una "
+"maggiore velocità, sposta il cursore più a sinistra."
 
 msgid "Imprint"
 msgstr "Note editoriali"
@@ -113,7 +113,7 @@ msgid "Select Server"
 msgstr "Seleziona Server"
 
 msgid "Select language"
-msgstr "Selezionare la lingua"
+msgstr "Seleziona la lingua"
 
 msgid "Send error log to Shellfire for solving connection problems"
 msgstr ""
@@ -130,7 +130,7 @@ msgid "Slow"
 msgstr "Lento"
 
 msgid "Status Unknown"
-msgstr "Status sconosciuto"
+msgstr "Status non conosciuto"
 
 msgid "Switch to English"
 msgstr "Passa all'inglese"
@@ -146,7 +146,7 @@ msgstr ""
 "una password di root per proteggere l'interfaccia e abilitare l'SSH."
 
 msgid "Try this if Wireguard and OpenVPN UDP are being blocked"
-msgstr "Provare se Wireguard e OpenVPN UDP sono bloccati."
+msgstr "Prova se Wireguard e OpenVPN UDP sono bloccati"
 
 msgid "Type"
 msgstr "Tipo"
