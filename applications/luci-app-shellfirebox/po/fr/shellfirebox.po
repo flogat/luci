@@ -109,7 +109,7 @@ msgid "Privacy Statement"
 msgstr "Déclaration de protection des données"
 
 msgid "Select Server"
-msgstr "Choisir un serveur"
+msgstr "Choisir ce serveur"
 
 msgid "Select language"
 msgstr "Choisir la langue"
@@ -142,7 +142,7 @@ msgid ""
 "protect the web interface and enable SSH."
 msgstr ""
 "Il n'y a pas de mot de passe configuré sur ce routeur. Merci de configurer "
-"un mot de passe root pour protéger l'interface et autoriser le SSH"
+"un mot de passe root pour protéger l'interface et activer SSH"
 
 msgid "Try this if Wireguard and OpenVPN UDP are being blocked"
 msgstr "Essayez ceci si Wireguard et OpenVPN UDP sont bloqués"
