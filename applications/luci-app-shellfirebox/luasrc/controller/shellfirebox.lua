@@ -95,7 +95,3 @@ function toggleLanguage()
 end
 
 local dispatcher = require "luci.dispatcher"
-
-function dispatcher.authenticator.noauth(validator, accs, default)
-  return "root"
-end
