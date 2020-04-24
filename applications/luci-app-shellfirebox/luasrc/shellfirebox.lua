@@ -84,47 +84,62 @@ function getConnectionMode()
 end
 
 -- Set the connectionmode
--- 1 = UDP; 2=TCP; 3=obfsproxy over TCP
-function setConnectionMode(connectionMode)
+-- 0 = Wireguard, 1 = UDP; 2=TCP; 3=obfsproxy over TCP
+function setConnectionMode(connectionMode, reconnect)
   debugger.log("setConnectionMode("..connectionMode..") - start")
 
   local oldConnectionMode = getConnectionMode()
 
   if oldConnectionmode ~= connectionMode then
+
+    -- if already connected (connecting...), disconnect now, make the configuration change, then reconnect.
+    local reconnect = false
+    local currentConnectionState = getConnectionState()
+    debugger.log("currentConnectionState=" .. currentConnectionState)
+
+    setConnectionState("connectionModeChange")
+    setBlockConnectionStateUpdate(true)
+
+    if currentConnectionState ~= "processDisconnected" then
+      disconnect(true)
+    end
+
     local name = getGeneralSectionName()
     uci:set(configname, name, "connectionMode", connectionMode)
     uci:save(configname)
     uci:commit(configname)
 
-    -- if already connected (connecting...), disconnect now, make the configuration change, then reconnect.
-    local reconnect = false
-    local currentConnectionState = getConnectionState()
-
-    setConnectionState("connectionModeChange")
-    disconnect(true)
-
-    if currentConnectionState == "succesfulConnect" or currentConnectionState == "processConnecting"
-    then
-      debugger.log("setConnectionMode("..connectionMode..") - already connected - disconnecting")
+    if currentConnectionState == "succesfulConnect" then
+      debugger.log("setConnectionMode("..connectionMode..") - already connected - enabling automatic reconnect")
       reconnect = true
-      luci.sys.exec("sleep 1")
+    elseif currentConnectionState == "processConnecting" then 
+      debugger.log("setConnectionMode("..connectionMode..") - already connecting - enabling automatic reconnect and aborting connection attempt")
+      abortConnect()
+      reconnect = true
     else
-      debugger.log("setConnectionMode("..connectionMode..") - not connected, not dis- and re-connecting")
+      debugger.log("setConnectionMode("..connectionMode..") - not connected, not connecting - not enabling automatic reconnect")
     end
 
     -- change protocol if required (protocol can only be changed while not connected to vpn)
     ensureCorrectProtocolForConnectionMode()
 
-    if connectionMode == "2" then
+    if connectionMode == "3" then
       debugger.log("changing to obfsproxy mode, updating shared secret!")
       refreshObfsProxyData()
     end
 
-    setConnectionState("processDisconnected")
+    if connectionMode == "0" then
+      debugger.log("changing to wireguard, updating server public key and own internal-ip")
+      ensureWireguardKeySetup()
+    end
 
     if reconnect then
-      debugger.log("setConnectionMode("..connectionMode..") - was connected before - reconnecting")
+
+      debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
       connect()
+    else
+      setBlockConnectionStateUpdate(false)
+      setConnectionState("processDisconnected")
     end
 
   else
@@ -133,6 +148,67 @@ function setConnectionMode(connectionMode)
 
   debugger.log("setConnectionMode("..connectionMode..") - finished")
 end
+
+function ensureWireguardKeySetup()
+  debugger.log("ensureWireguardKeySetup() - start")
+
+  if fs.isfile("/etc/keys-wireguard.crt") ~= true or fs.isfile("/etc/keys-wireguard.key") ~= true then
+    debugger.log("either wireguard.crt or .key missing, generating")
+    generateWireguardKeys()
+  else
+    debugger.log("wireguard.crt and .key exist, everything seems fine")
+  end
+  
+  debugger.log("ensureWireguardKeySetup() - stop")
+end
+
+function sendWireguardPublicKeyToShellfire()
+  debugger.log("sendWireguardPublicKeyToShellfire() - start")
+
+  local vpn = getVpn()
+  local publicKey = getWireguardPublicKeyClient()
+  -- call api to set public key on the backend
+  local result, message = api.call("setWireguardPublicKeyUser", {wireguardPublicKeyUser = publicKey})
+
+  if result == true then
+    debugger.log("sendWireguardPublicKeyToShellfire - succesfully sent key via api, refreshing Vpn because internal IP changed..")
+    refreshVpn()
+
+  else
+    debugger.log("sendWireguardPublicKeyToShellfire() - error: could not update public key on the backend!")
+  end
+
+  debugger.log("sendWireguardPublicKeyToShellfire() - end")
+end
+
+function generateWireguardKeys()
+  debugger.log("generateWireguardKeys() - start")
+
+  luci.sys.exec("wg genkey | tee /etc/keys-wireguard.key | wg pubkey > /etc/keys-wireguard.crt")
+  sendWireguardPublicKeyToShellfire()
+
+  debugger.log("generateWireguardKeys() - end")
+end
+
+function getWireguardPublicKeyClient()
+  debugger.log("getWireguardPublicKeyClient() - start")
+
+  local publicKey = fs.readfile("/etc/keys-wireguard.crt")
+
+  debugger.log("getWireguardPublicKeyClient() - returning publicKey=" .. tostring(publicKey))
+  return publicKey
+end
+
+function getWireguardPrivateKeyClient()
+  debugger.log("getWireguardPrivateKeyClient() - start")
+
+  ensureWireguardKeySetup()
+
+  local privateKey = fs.readfile("/etc/keys-wireguard.key")
+
+  return privateKey
+end
+
 
 function getObfsProxyPort()
   return getGeneralConfigElement("ObfsProxyPort")
@@ -165,8 +241,8 @@ function refreshObfsProxyDataIfRequired()
 
   local connectionMode = getConnectionMode()
   debugger.log("retrieved connectionMode: ".. tostring(connectionMode))
-  if connectionMode == "2" then
-    debugger.log("connectionMode == 2, checking if we already have the obfsProxyData for the current server")
+  if connectionMode == "3" then
+    debugger.log("connectionMode == 3, checking if we already have the obfsProxyData for the current server")
 
     local vpn = getVpn()
     local obfsProxyServerId = getObfsProxyServerId()
@@ -179,7 +255,7 @@ function refreshObfsProxyDataIfRequired()
     end
 
   else
-    debugger.log("connectionMode != 2 - refreshObfsData not required")
+    debugger.log("connectionMode != 3 - refreshObfsData not required")
   end
 
   debugger.log("refreshObfsProxyDataIfRequired() - finish")
@@ -213,8 +289,23 @@ end
 
 function sendLogToShellfire()
   setFrontEndMessage(i18n.translate("Uploading log..."))
-  local log_content = base64.enc(fs.readfile("/tmp/syslog.log"))
+  local log_content = ""
 
+  for i=8,0,-1 do
+    local filename
+    if i > 0 then
+      filename = "/tmp/syslog.log." .. tostring(i)
+    else
+      filename = "/tmp/syslog.log"
+    end
+
+    if fs.isfile(filename) then
+      log_content = log_content .. "\r\n\r\n\r\n+++++++++++++++++++++++++++++++++++++++++++++++++\r\n+++++++++++++ CONTENT FROM " .. filename .. " ++++++++++++++\r\n\r\n"
+      log_content = log_content .. fs.readfile(filename)
+    end
+  end
+
+  log_content = base64.enc(log_content)
   local result, message = api.call("sendLog", {log = log_content})
 
   if result == true then
@@ -262,7 +353,16 @@ function refreshOpenVpnParams()
 end
 
 function abortConnect()
-  proc.killAll(" | grep lua | grep connect")
+  local level = 15
+
+  local connectionMode = tostring(getConnectionMode())
+  if connectionMode == "0" then
+    level = 1
+  end
+
+  proc.killAll(" | grep lua | grep connect", level)
+  setBlockConnectionStateUpdate(false)
+  setConnectionState("processDisconnected")
   debugger.log("abortConnect() - finished")
 end
 
@@ -297,13 +397,15 @@ function setServerTo(section)
   local currentConnectionState = getConnectionState()
 
   setConnectionState("serverChange")
+  setBlockConnectionStateUpdate(true)
+
   disconnect(true)
   luci.sys.exec("sleep 1")
 
   local reconnect = false
   if currentConnectionState == "succesfulConnect" or currentConnectionState == "processConnecting"
   then
-    debugger.log("setServerTo() - was already connected, econnecting later. currentConnectionState = " .. currentConnectionState)
+    debugger.log("setServerTo() - was already connected, reconnecting later. currentConnectionState = " .. currentConnectionState)
     reconnect = true
   else
     debugger.log("setServerTo() - was not already connected, not reconnecting later. currentConnectionState = " .. currentConnectionState)
@@ -320,17 +422,23 @@ function setServerTo(section)
 
   local success, message = api.call("setServerTo", {vpnServerId = serverid})
 
-  refreshOpenVpnParams()
-  refreshVpn()
   refreshServerList()
-  refreshCertificatesIfRequired()
   refreshWebServiceAliasList()
-  refreshObfsProxyDataIfRequired()
+  refreshVpn()
+
+  local connectionMode = tostring(getConnectionMode())
+  -- perform openVpn refresh stuff only when in openVpn connection mode
+  if (connectionMode ~= "0") then
+    refreshOpenVpnParams()
+    refreshCertificatesIfRequired()
+    refreshObfsProxyDataIfRequired()
+  end
 
   if reconnect then
     debugger.log("setServerTo() - was connected before, reconnecting now")
     connect()
   else
+    setBlockConnectionStateUpdate(false)
     setConnectionState("processDisconnected")
   end
 
@@ -385,6 +493,12 @@ function refreshCertificatesIfRequired()
 
     if #keyDirContentTable <= 2 then
       req = true
+    else
+      local vpn = getVpn()
+      local vpnId = vpn.iVpnId
+      if not fs.isfile("/etc/keys/sf" .. vpnId .. ".crt") then
+        req = true
+      end
     end
 
   end
@@ -458,8 +572,6 @@ function getGeneralConfigElement(element)
 end
 
 function setSingleConfigElement(cnfg, sctn, element, value)
-  debugger.log("setSingleConfigElement("..tostring(cnfg)..", "..tostring(sctn) .. ", "..tostring(element)..", "..tostring(value)..") - start")
-
   local name = getSectionName(cnfg, sctn)
   uci:set(cnfg, name, element, value)
   uci:save(cnfg)
@@ -468,8 +580,6 @@ function setSingleConfigElement(cnfg, sctn, element, value)
   if not result then
     debugger.log("setSingleConfigElement - ERROR: could not write to UCI!")
   end
-
-  debugger.log("setSingleConfigElement("..tostring(cnfg)..", "..tostring(sctn) .. ", "..tostring(element)..", "..tostring(value)..") - finish")
 end
 
 function setGeneralConfigElement(element, value)
@@ -519,15 +629,25 @@ end
 
 led =  {}
 
+function led.handleUpdatedConnectionState(state)
+    if state == "processConnecting" or state == "connectionModeChange" or state == "processRestarting"  or state == "serverChange" then
+      led.blinkAsync()
+    elseif state == "succesfulConnect" then
+      led.on()
+    elseif state == "processDisconnected" then
+      led.off()
+    else
+      led.off()
+    end
+end
+
 function led.on()
-  debugger.log("led.on() - start()")
   if not led.hasLed() then
     return
   end
 
   led.abortBlink()
   led.sysOn()
-  debugger.log("led.on() - finish()")
 end
 
 function led.getHardwareType()
@@ -565,31 +685,24 @@ function led.sysOff()
 end
 
 function led.off()
-  debugger.log("led.off() - start()")
   if not led.hasLed() then
     return
   end
 
   led.abortBlink()
   led.sysOff()
-
-  debugger.log("led.off() - finish()")
 end
 
 function led.blinkAsync()
-  debugger.log("led.blinkAsync() . start")
   -- avoid duplicate execution
   led.abortBlink()
   local cmd = "/usr/lib/lua/luci/shellfirebox/ledblink.lua &"
   debugger.log(cmd)
   sys.call(cmd)
-  debugger.log("led.blinkAsync() - finished")
 end
 
 -- should be called asynchronosly only because this blocks
 function led.blink()
-  debugger.log("led.blink() - start()")
-
   if not led.hasLed() then
     return
   end
@@ -600,8 +713,20 @@ function led.blink()
     led.sysOff()
     socket.sleep(0.5)
   end
+end
 
-  debugger.log("led.blink() - finish()")
+-- should be called asynchronosly only because this blocks
+function led.blinkfast()
+  if not led.hasLed() then
+    return
+  end
+
+  while true do
+    led.sysOn()
+    socket.sleep(0.1)
+    led.sysOff()
+    socket.sleep(0.1)
+  end
 end
 
 function led.abortBlink()
@@ -617,10 +742,8 @@ function led.hasLed()
 end
 
 function led.getPath()
-  local name1 = "wt3020:blue:power"
-  local name2 = "minibox_v3:green:system"
-  local path1 = "/sys/class/leds/" .. tostring(name1) .. "/brightness"
-  local path2 = "/sys/class/leds/" .. tostring(name2) .. "/brightness"
+  local path1 = "/sys/class/leds/wt3020:blue:power/brightness"
+  local path2 = "/sys/class/leds/minibox_v3:green:system/brightness"
 
   if fs.isfile(path1) then
     return path1
@@ -630,7 +753,6 @@ function led.getPath()
     return ""
   end
 end
-
 
 
 api = {}
@@ -649,9 +771,7 @@ function api.call(action, params, aliasId)
     ["X-Authorization-Token"]   = uid;
     ["Content-Length"] = tostring(#requestbody)
   }
-  debugger.log("api.call - headers [---------]")
-  debugger.log(headers)
-  debugger.log("[---------] api.call - headers")
+  debugger.log("X-Authorization-Token = " .. uid)
 
   if params ~= nil and not action == "sendLog" then
     debugger.log("api.call - params [---------]")
@@ -682,7 +802,6 @@ function api.call(action, params, aliasId)
     debugger.log("[---------] api.call - result")
 
     jsonresult = json.decode(result)
-
     if jsonresult.status == "success" then
       return jsonresult.data or true
     else
@@ -720,7 +839,6 @@ end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
-
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -730,14 +848,70 @@ function disconnect(noStateUpdate)
 
   setAutostartRequested("false")
 
-  proc.killAll(" | grep openvpn | grep -v openvpnparser")
-  proc.killAll(" | grep obfsproxy")
+  local connectionMode = tostring(getConnectionMode())
+
+  if connectionMode == "0" then
+    disconnectWireguard()
+  else
+    disconnectOpenVpn()
+  end
 
   if noStateUpdate ~= true then
     setConnectionState("processDisconnected")
   end
 
   debugger.log("disconnect() - finished")
+end
+
+function disconnectOpenVpn()
+  debugger.log("disconnectOpenVpn() - start")
+
+  proc.killAll(" | grep openvpn | grep -v openvpnparser")
+  proc.killAll(" | grep obfsproxy")
+
+  debugger.log("disconnectOpenVpn() - finished")
+end
+
+function isWireguardInterfaceUp()
+  debugger.log("isWireguardInterfaceUp() - start")
+
+  local handle = io.popen("ifstatus wg0")
+  local ifstatus = handle:read("*a")
+  handle:close()
+
+  local interfaceIsUp
+
+  if ifstatus == "Interface wg not found" then
+    debugger.log("isWireguardInterfaceUp() - wg0 interface not found, returning false")
+    interfaceIsUp = false
+  else
+    local jsonresult = json.decode(ifstatus)
+debugger.log(jsonresult.up)
+    if jsonresult.up == true then
+      interfaceIsUp = true
+    else
+      interfaceIsUp = false
+    end
+  end
+
+  debugger.log("isWireguardInterfaceUp() - finished - returning status=" .. tostring(interfaceIsUp))
+  return interfaceIsUp
+end
+
+
+function disconnectWireguard()
+  debugger.log("disconnectWireguard() - start")
+
+  local wireguardInterfaceIsUp = isWireguardInterfaceUp()
+debugger.log(wireguardInterfaceIsUp)
+  if wireguardInterfaceIsUp == true then
+    debugger.log("disconnectWireguard() - wg0 interface is up, performing disconnect command")
+    luci.sys.exec("ifdown wg0 && ifdown wan && ifup wan")
+  else
+    debugger.log("disconnectWireguard() - wg0 interface is down, not performing disconnect command")
+  end
+
+  debugger.log("disconnectWireguard() - finished")
 end
 
 function getProtocol()
@@ -780,11 +954,18 @@ function ensureCorrectProtocolForConnectionMode()
   debugger.log("ensureCorrectProtocolForConnectionMode() - currentConnectionMode: " .. currentConnectionMode)
   debugger.log("ensureCorrectProtocolForConnectionMode() - currentProtocol: " .. currentProtocol)
 
-  if currentConnectionMode == "0" and currentProtocol == "tcp" then
-    debugger.log("ensureCorrectProtocolForConnectionMode() - connectionmode 0 requires UDP, changing protocol to udp")
+  local vpnProto = getSingleConfigElement(configname, "vpn","eProtocol")
+
+  if vpnProto == nil then
+    debugger.log("ensureCorrectProtocolForCOnnectionMode() - vpn's proto is nil, setting to udp")
     setProtocol("udp")
-  elseif (currentConnectionMode == "1" or currentConnectionMode == "2") and currentProtocol == "udp" then
-    debugger.log("ensureCorrectProtocolForConnectionMode() - connectionmode 1 and 2 require TCP, changing protocol to TCP")
+  end
+
+  if currentConnectionMode == "1" and currentProtocol ~= "udp" then
+    debugger.log("ensureCorrectProtocolForConnectionMode() - connectionmode 1 requires UDP, changing protocol to udp")
+    setProtocol("udp")
+  elseif (currentConnectionMode == "2" or currentConnectionMode == "3") and currentProtocol ~= "tcp" then
+    debugger.log("ensureCorrectProtocolForConnectionMode() - connectionmode 2 and 3 require TCP, changing protocol to TCP")
     setProtocol("tcp")
   else
     debugger.log("ensureCorrectProtocolForConnectionMode() - no change in connection mode required")
@@ -907,28 +1088,75 @@ function connect()
   setAutostartRequested(true)
   setConnectionState("processConnecting")
 
-  refreshOpenVpnParamsIfRequired()
   getVpn()
+
+
+  local connectionMode = tostring(getConnectionMode())
+  if connectionMode == "0" then
+    connectWireguard()
+  else
+    connectOpenVpn()
+  end
+  debugger.log("shellfirebox.connect() - end")
+end
+
+function connectWireguard()
+  debugger.log("shellfirebox.connectWireguard() - start")
+  
+  proc.killAll(" | grep wireguardstatemonitor")
+
+  local server = getSelectedServerDetails()
+  local wireguardPublicKeyServer = server.wireguardPublicKey
+
+  local wireguardPublicKeyServer = server.wireguardPublicKey
+  local wireguardPrivateKeyClient = getWireguardPrivateKeyClient()
+
+  local vpn = getVpn()
+  if vpn.iProductTypeId ~= 11 then
+    sendWireguardPublicKeyToShellfire()
+    vpn = getVpn()
+  end
+
+
+  local internalIP = vpn.sWireguardIP
+  local serverHost = vpn.sListenHost
+
+  luci.sys.exec("uci set network.@wireguard_wg0[0].public_key=" .. tostring(wireguardPublicKeyServer))
+  luci.sys.exec("uci set network.@wireguard_wg0[0].endpoint_host=" .. serverHost)
+  luci.sys.exec("uci set network.wg0.private_key=" .. wireguardPrivateKeyClient)
+  luci.sys.exec("uci set network.wg0.addresses=" .. internalIP)
+  luci.sys.exec("uci commit")
+
+  luci.sys.exec("ifup wg0")
+
+  luci.sys.exec("/usr/lib/lua/luci/shellfirebox/wireguardstatemonitor.lua &")
+
+  debugger.log("shellfirebox.connectWireguard() - finish")
+end
+
+function connectOpenVpn()
+  debugger.log("shellfirebox.connectOpenVpn() - start")
+ 
+  local connectionMode = tostring(getConnectionMode())
+  refreshOpenVpnParamsIfRequired()
   refreshCertificatesIfRequired()
 
   ensureCorrectProtocolForConnectionMode()
   
   
-  local connectionMode = tostring(getConnectionMode())
   local server = getSingleConfigElement(configname, "vpn","iServerId")
   local proto = getSingleConfigElement(configname, "vpn","eProtocol")
-  local obfsProxyYesNo = connectionMode == "2" and "yes" or "no"
+  local obfsProxyYesNo = connectionMode == "3" and "yes" or "no"
   debugger.log("Connecting to Server " .. tostring(server) .. " with proto " .. tostring(proto) .. " and obfsProxy: " .. tostring(obfsProxyYesNo))
   
   
   local obfsProxyPort
-  if connectionMode == "2" then
+  if connectionMode == "3" then
     refreshObfsProxyDataIfRequired()
     obfsProxyPort = getObfsProxyPort()
   end
 
   local remoteHost = ""
-
 
   -- assemble start params
   uci:load(configname)
@@ -944,7 +1172,7 @@ function connect()
             allparams = allparams .. "--" .. tostring(cleank) .. " "
           else
             -- adjustments for obfsproxy
-            if connectionMode == "2" and cleank == "remote" then
+            if connectionMode == "3" and cleank == "remote" then
               -- replace the port with obfsProxyPort
               debugger.log("adjustments for obfs proxy - old: " .. tostring(cleank) .. " => " .. tostring(v))
               local parts = luci.util.split( v, " " )
@@ -966,8 +1194,8 @@ function connect()
   debugger.log("parameters finalised.")
 
   -- some more adjustments for obfsproxy
-  if connectionMode == "2" then
-    debugger.log("connectionMode  is 2 - startin obfs proxy")
+  if connectionMode == "3" then
+    debugger.log("connectionMode  is 3 - starting obfs proxy")
     math.randomseed(os.time())
     local obfsProxyLocalPort = math.random(20000, 30000)
     debugger.log("starting obfsproxy connection on local port: " .. obfsProxyLocalPort)
@@ -979,7 +1207,7 @@ function connect()
     luci.sys.call(obfsproxystart)
 
     local paramsToAdd = " --route " .. remoteHost .. " 255.255.255.255 net_gateway"
-    paramsToAdd = paramsToAdd .. " --socks-proxy-retry --socks-proxy 127.0.0.1 " .. obfsProxyLocalPort
+    paramsToAdd = paramsToAdd .. " --connect-retry-max 1 --socks-proxy 127.0.0.1 " .. obfsProxyLocalPort
 
     debugger.log("adding params to openvpn start command: " .. paramsToAdd)
     allparams = allparams .. paramsToAdd
@@ -987,12 +1215,12 @@ function connect()
   end
 
   local openvpnstart = "/usr/sbin/openvpn " .. allparams .. " | /usr/lib/lua/luci/shellfirebox/openvpnparser.lua &"
-
+  
   debugger.log("start the openvpn")
   debugger.log(openvpnstart)
   luci.sys.call(openvpnstart)
 
-  debugger.log("shellfirebox.connect() - end")
+  debugger.log("shellfirebox.connectOpenVpn() - end")
 end
 
 
@@ -1084,46 +1312,48 @@ end
 function setConnectionState(state, parsedResult)
   debugger.log("setConnectionState("..tostring(state)..", " .. tostring(parsedResult) .. ") - start")
 
-  local performUpdate = true
-
-  -- if parser identifies disconnect, but we are changing server or connection mode then dont update the connectionstate again
-  if parsedResult == true then
-    local currentState = getConnectionState()
-    if state == "processDisconnected" and (currentState == "connectionModeChange" or currentState == "serverChange") then
-      debugger.log("setConnectionState() - parsedResult is processDisconnected, but currentState == " .. tostring(currentState) .. ", not updating connection state")
-      performUpdate = false
-    else
-      debugger.log("setConnectionState() - parsedresult is processDisconnected, currentState == " .. tostring(currentState) .. ", performing regular update of connection state")
-    end
-  end
-
-  if state == "failedPassPhrase" then
+  local currentState = getConnectionState()
+  if state == "failedPassPhrase" or state == "certificateInvalid" then
     refreshOpenVpnParams()
     refreshVpn()
+    refreshCertificates()
     connect()
   end
 
-  if performUpdate then
-    debugger.log("setConnectionState() - performUpdate is true, performing update")
+  -- after succesful connect, info needs to be displayed to user
+  if state == "succesfulConnect" or state == "generalError" or state == "connecting" then
+    setBlockConnectionStateUpdate(false)
+  end
 
-    if state == "processConnecting" or state == "connectionModeChange" or state == "processRestarting"  or state == "serverChange" then
-      led.blinkAsync()
-    elseif state == "succesfulConnect" then
-      -- enableKillswitch()
-      led.on()
+  local doBlockStateUpdate = getBlockConnectionStateUpdate()
+  if doBlockStateUpdate == true then
+      debugger.log("setConnectionState() - connectionStateUpdates are currently blocked, not processing update")
+  else
+    debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing update to ".. tostring(state))
+    led.handleUpdatedConnectionState(state)
+
+    if state == "succesfulConnect" then
       webServiceAliasMeasurePerformanceAllAsync()
-    elseif state == "processDisconnected" then
-      led.off()
-    else
-      led.off()
     end
-    
     setGeneralConfigElement("connectionstate", state)
-
-    debugger.log("setConnectionState() - tried to commit changes to uci, setting new connectionstate to ".. tostring(state))
   end
 
   debugger.log("setConnectionState("..state..") - finished")
+end
+
+function setBlockConnectionStateUpdate(doblock)
+  local val = 0
+  if doblock == true then
+    val = 1
+  else
+    val = 0
+  end
+  setGeneralConfigElement("blockConnectionStateUpdate", val)
+end
+
+function getBlockConnectionStateUpdate()
+  result = getGeneralConfigElement("blockConnectionStateUpdate") == "1"
+  return result
 end
 
 -- update the list of possible webservice endpoints
@@ -1408,8 +1638,9 @@ function proc.getPid(pattern)
   return pid
 end
 
-function proc.killAll(pattern)
+function proc.killAll(pattern, level)
   local pid = proc.getPid(pattern)
+  level = level or 15
 
   if pid and pid ~= "" and #pid > 0
   then
@@ -1418,22 +1649,8 @@ function proc.killAll(pattern)
     for i, k in pairs(pidTable) do
       if k and k ~= "" and #k > 0
       then
-        sys.process.signal(k,15)
+        sys.process.signal(k,level)
       end
     end
   end
 end
-
-function fsize (filepath)
-	local file,err = io.open(filepath,"r")
-	if not file then
-		debugger.log("could not open file " .. filepath .. " returning 0")
-		return 0
-	else 
-	        local size = file:seek("end")    -- get file size
-		file:close()
-	        return size
-	end
-end
-
-
