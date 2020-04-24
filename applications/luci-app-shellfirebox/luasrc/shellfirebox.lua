@@ -533,7 +533,7 @@ end
 function led.getHardwareType()
   if hardwareType == 0 then
     local path = led.getPath()
-    if string.match(path, "nexx") then
+    if string.match(path, "wt3020") then
       hardwareType = "wt3020"
     else
       hardwareType = "minibox"
@@ -617,7 +617,7 @@ function led.hasLed()
 end
 
 function led.getPath()
-  local name1 = "nexx:blue:power"
+  local name1 = "wt3020:blue:power"
   local name2 = "minibox_v3:green:system"
   local path1 = "/sys/class/leds/" .. tostring(name1) .. "/brightness"
   local path2 = "/sys/class/leds/" .. tostring(name2) .. "/brightness"

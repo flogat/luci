@@ -15,6 +15,7 @@ function index()
   entry( {"admin", "services", "shellfirebox", "disconnect"}, call("disconnect") )
   entry( {"admin", "services", "shellfirebox", "abort"}, call("abort"))
   entry( {"admin", "services", "shellfirebox", "setServerTo"}, call("setServerTo"))
+  entry( {"admin", "services", "shellfirebox", "doDownloadFirmware"}, call("doDownloadFirmware"))
   
   local shellfirebox = require "luci.shellfirebox"
   if not luci.sys.user.getpasswd("root") then
@@ -42,21 +43,35 @@ function abort()
   -- if changing server, abort the server change
   if shellfirebox.getConnectionState() == "serverChange" then
     shellfirebox.abortSetServer()
-  elseif shellfirebox.getConnectionState() == "connectionModeChange" then
-    shellfirebox.abortSetConnectionMode()
   else
-    -- otherwise currently connecting, then abort connect and disconnect thereafter to make sure it worked.
-    shellfirebox.abortConnect()
-    luci.sys.exec("sleep 5")
+    -- otherwise kill the openvpn process / disconnect
     shellfirebox.disconnect()
- end
-
- luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
+   end
+   luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
 end
 
 function setServerTo()
   local serverId = luci.http.formvalue("server")
   shellfirebox.setServerToAsync(serverId)
+  luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
+end
+
+function doDownloadFirmware()
+  local filepath = "/tmp/ShellfireTeamspeakTutorial.pdf"
+  luci.sys.exec("rm -rf " .. filepath)
+  luci.sys.exec("wget -P /tmp https://www.shellfire.de/docs/ShellfireTeamspeakTutorial.pdf")
+
+  local expectedSize = 1034520
+  local actualSize = shellfirebox.fsize(filepath)
+
+  if expectedSize == actualSize then
+    -- luci.sys.exec("sysupgrade -c -v " .. filepath)
+    debugger.log("########## YAY ############# WOULD DEFINIETLY FLASH THE DOWNLOADED ROM NOW! ##############")
+
+  else
+    debugger.log("expectedSize=" .. tostring(expectedSize) .. " but actualSize=" .. tostring(actualSize) .. " - not performing sysupgrade")
+  end
+
   luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shellfirebox"))
 end
 
@@ -81,6 +96,6 @@ end
 
 local dispatcher = require "luci.dispatcher"
 
--- function dispatcher.authenticator.noauth(validator, accs, default)
---   return "root"
--- end
+function dispatcher.authenticator.noauth(validator, accs, default)
+  return "root"
+end
