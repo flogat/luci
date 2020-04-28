@@ -80,15 +80,18 @@ while true do
   if currentStatusConnected == false and wanconnected == true and data ~= nil then
     debugger.log("connection state change detected, now connected!")
     shellfirebox.setConnectionState("succesfulConnect", true)
+    shellfirebox.callWireguardUpScript()
   end
 
   if currentStatusConnected == true and data == nil then
     debugger.log("connection state change detected, now disconnected!")
+    shellfirebox.callWireguardDownScript()
     shellfirebox.setConnectionState("processDisconnected", true)
   end
 
   if currentStatusConnected == true and wanconnected == false then
     debugger.log("wan not connected anymore, now disconnected!")
+    shellfirebox.callWireguardDownScript()
     shellfirebox.setConnectionState("processDisconnected", true)
   end
 

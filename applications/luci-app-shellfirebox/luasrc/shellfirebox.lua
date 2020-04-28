@@ -1437,6 +1437,16 @@ function webServiceAliasMeasurePerformance(aliasId)
   debugger.log("webServiceAliasMeasurePerformance(" .. tostring(aliasId) .. ") - end")
 end
 
+function callWireguardDownScript()
+  luci.sys.call("/usr/lib/lua/luci/shellfirebox/scripts/down-wireguard.sh")
+end
+
+
+function callWireguardUpScript()
+  luci.sys.call("/usr/lib/lua/luci/shellfirebox/scripts/up-wireguard.sh")
+end
+
+
 function webServiceAliasMeasurePerformanceAll()
   debugger.log("webServiceAliasMeasurePerformanceAll() - start - sleeping 10 minutes")
   luci.sys.exec("sleep 600")
