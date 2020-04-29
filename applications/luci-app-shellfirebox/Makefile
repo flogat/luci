@@ -9,6 +9,12 @@ LUCI_TITLE:=Shellfire Box Application for LuCI / OpenWRT
 LUCI_DEPENDS:=+luasec +luci-lib-json
 PKG_VERSION:=$$(shell git rev-list HEAD --count)
 
+define Package/luci-app-shellfirebox/postinst
+#!/bin/sh
+# /usr/lib/lua/luci/shellfirebox/scripts/down.sh
+exit 0
+endef
+
 include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
