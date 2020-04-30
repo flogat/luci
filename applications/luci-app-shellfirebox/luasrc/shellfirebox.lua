@@ -908,6 +908,7 @@ debugger.log(wireguardInterfaceIsUp)
     debugger.log("disconnectWireguard() - wg0 interface is down, not performing disconnect command")
   end
 
+  proc.killAll(" | grep wireguardstatemonitor", level)
   callWireguardDownScript()
 
   debugger.log("disconnectWireguard() - finished")
