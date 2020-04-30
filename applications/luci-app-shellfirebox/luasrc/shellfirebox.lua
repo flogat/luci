@@ -88,7 +88,7 @@ end
 function setConnectionMode(connectionMode, reconnect)
   debugger.log("setConnectionMode("..connectionMode..") - start")
 
-  proc.killAll(" | grep wireguardstatemonitor", level)
+  proc.killAll(" | grep wireguardstatemonitor")
 
   local oldConnectionMode = getConnectionMode()
 
