@@ -911,6 +911,8 @@ debugger.log(wireguardInterfaceIsUp)
     debugger.log("disconnectWireguard() - wg0 interface is down, not performing disconnect command")
   end
 
+  callWireguardDownScript()
+
   debugger.log("disconnectWireguard() - finished")
 end
 
