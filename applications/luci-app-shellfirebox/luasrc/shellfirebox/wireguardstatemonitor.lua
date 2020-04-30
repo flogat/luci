@@ -77,6 +77,10 @@ while true do
   wanconnected = isWanConnected()
   currentStatusConnected = shellfirebox.getConnectionState() == "succesfulConnect"
 
+  if shellfirebox.getConnectionState() == "connectionModeChange" then
+    do return end
+  end
+
   if currentStatusConnected == false and wanconnected == true and data ~= nil then
     debugger.log("connection state change detected, now connected!")
     shellfirebox.setConnectionState("succesfulConnect", true)
