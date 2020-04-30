@@ -845,8 +845,8 @@ function disconnect(noStateUpdate)
 
   setAutostartRequested("false")
 
+  proc.killAll(" | grep wireguardstatemonitor")
   local connectionMode = tostring(getConnectionMode())
-
   if connectionMode == "0" then
     disconnectWireguard()
   else
@@ -908,7 +908,6 @@ debugger.log(wireguardInterfaceIsUp)
     debugger.log("disconnectWireguard() - wg0 interface is down, not performing disconnect command")
   end
 
-  proc.killAll(" | grep wireguardstatemonitor")
   callWireguardDownScript()
 
   debugger.log("disconnectWireguard() - finished")
