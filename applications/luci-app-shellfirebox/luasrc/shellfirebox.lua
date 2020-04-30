@@ -355,12 +355,9 @@ end
 function abortConnect()
   local level = 15
 
-  local connectionMode = tostring(getConnectionMode())
-  if connectionMode == "0" then
-    level = 1
-  end
-
   proc.killAll(" | grep lua | grep connect", level)
+  proc.killAll(" | grep wireguardstatemonitor", level)
+
   setBlockConnectionStateUpdate(false)
   setConnectionState("processDisconnected")
   debugger.log("abortConnect() - finished")
