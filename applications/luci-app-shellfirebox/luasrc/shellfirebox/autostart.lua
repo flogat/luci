@@ -64,5 +64,6 @@ if shellfirebox.getAutostartRequested() == "true" then
   shellfirebox.connectAsync()
 else
   debugger.log("autostarter - autostartRequested is false, so doing nothing")
+  shellfirebox.led.off()
 end
     

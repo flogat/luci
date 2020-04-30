@@ -1438,11 +1438,12 @@ function webServiceAliasMeasurePerformance(aliasId)
 end
 
 function callWireguardDownScript()
+  debugger.log("callWireguardDownScript()")
   luci.sys.call("/usr/lib/lua/luci/shellfirebox/scripts/down-wireguard.sh")
 end
 
-
 function callWireguardUpScript()
+  debugger.log("callWireguardUpScript()")
   luci.sys.call("/usr/lib/lua/luci/shellfirebox/scripts/up-wireguard.sh")
 end
 
