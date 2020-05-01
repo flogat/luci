@@ -88,7 +88,7 @@ end
 function setConnectionMode(connectionMode, reconnect)
   debugger.log("setConnectionMode("..connectionMode..") - start")
 
-  proc.killAll(" | grep wireguardstatemonitor")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor")
 
   local oldConnectionMode = getConnectionMode()
 
@@ -355,10 +355,8 @@ function refreshOpenVpnParams()
 end
 
 function abortConnect()
-  local level = 15
-
-  proc.killAll(" | grep lua | grep connect", level)
-  proc.killAll(" | grep wireguardstatemonitor", level)
+  proc.killAll(" | grep lua | grep connect")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor")
 
   setBlockConnectionStateUpdate(false)
   setConnectionState("processDisconnected")
@@ -834,10 +832,12 @@ end
 
 function abortSetServer()
   proc.killAll(" | grep lua | grep setServerTo")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor")
 end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
+  proc.killAll("| grep lua | grep wireguardstatemonitor")
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -847,7 +847,7 @@ function disconnect(noStateUpdate)
 
   setAutostartRequested("false")
 
-  proc.killAll(" | grep wireguardstatemonitor")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor")
   local connectionMode = tostring(getConnectionMode())
   if connectionMode == "0" then
     disconnectWireguard()
@@ -1104,7 +1104,7 @@ end
 function connectWireguard()
   debugger.log("shellfirebox.connectWireguard() - start")
   
-  proc.killAll(" | grep wireguardstatemonitor")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor")
 
   local server = getSelectedServerDetails()
   local wireguardPublicKeyServer = server.wireguardPublicKey
