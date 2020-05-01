@@ -72,6 +72,8 @@ local data
 local wanconnected
 local currentStatusConnected
 
+
+debugger.log("wireguardstatemonitor - starting up");
 while true do
   data = getWireguardStatus()
   wanconnected = isWanConnected()
@@ -79,23 +81,24 @@ while true do
 
   currentConnectionMode = shellfirebox.getConnectionMode()
   if shellfirebox.getConnectionState() == "connectionModeChange" and currentConnectionMode ~= 0 then
+    debugger.log("wireguardstatemonitor - connectionState==connectionModeChange and currentConnectionMode <> 0 -> changing connection mode to something else than wireguard, my services are no longer needed - i quit.")
     do return end
   end
 
   if currentStatusConnected == false and wanconnected == true and data ~= nil then
-    debugger.log("connection state change detected, now connected!")
+    debugger.log("wireguardstatemonitor - connection state change detected, now connected!")
     shellfirebox.setConnectionState("succesfulConnect", true)
     shellfirebox.callWireguardUpScript()
   end
 
   if currentStatusConnected == true and data == nil then
-    debugger.log("connection state change detected, now disconnected!")
+    debugger.log("wireguardstatemonitor - connection state change detected, now disconnected!")
     shellfirebox.callWireguardDownScript()
     shellfirebox.setConnectionState("processDisconnected", true)
   end
 
   if currentStatusConnected == true and wanconnected == false then
-    debugger.log("wan not connected anymore, now disconnected!")
+    debugger.log("wireguardstatemonitor - wan not connected anymore, now disconnected!")
     shellfirebox.callWireguardDownScript()
     shellfirebox.setConnectionState("processDisconnected", true)
   end
