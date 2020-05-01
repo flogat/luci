@@ -440,7 +440,9 @@ function setServerTo(section)
     connect()
   else
     setBlockConnectionStateUpdate(false)
-    setConnectionState("processDisconnected")
+    if not currentConnectionState == "connectionModeChange" then
+      setConnectionState("processDisconnected")
+    end
   end
 
   debugger.log("setServerTo() - finished")
