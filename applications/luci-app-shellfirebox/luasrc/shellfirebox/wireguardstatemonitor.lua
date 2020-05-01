@@ -77,7 +77,8 @@ while true do
   wanconnected = isWanConnected()
   currentStatusConnected = shellfirebox.getConnectionState() == "succesfulConnect"
 
-  if shellfirebox.getConnectionState() == "connectionModeChange" then
+  currentConnectionMode = shellfirebox.getConnectionMode()
+  if shellfirebox.getConnectionState() == "connectionModeChange" and currentConnectionMode ~= 0 then
     do return end
   end
 
