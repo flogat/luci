@@ -869,8 +869,8 @@ end
 function disconnectOpenVpn()
   debugger.log("disconnectOpenVpn() - start")
 
-  proc.killAll(" | grep openvpn | grep -v openvpnparser")
-  proc.killAll(" | grep obfsproxy")
+  proc.killAll(" | grep openvpn | grep -v openvpnparser", 15)
+  proc.killAll(" | grep obfsproxy", 15)
 
   debugger.log("disconnectOpenVpn() - finished")
 end
@@ -1657,7 +1657,6 @@ end
 
 function proc.killAll(pattern, level)
   local pid = proc.getPid(pattern)
-  level = level or 15
 
   if pid and pid ~= "" and #pid > 0
   then
@@ -1666,9 +1665,12 @@ function proc.killAll(pattern, level)
     for i, k in pairs(pidTable) do
       if k and k ~= "" and #k > 0
       then
-        sys.process.signal(k,1)
-        sys.process.signal(k,15)
-        sys.process.signal(k,level)
+        if level then
+          sys.process.signal(k,level)
+        else 
+          sys.process.signal(k,1)
+          sys.process.signal(k,15)
+        end    
       end
     end
   end
