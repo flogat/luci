@@ -1340,7 +1340,7 @@ function setConnectionState(state, parsedResult)
     debugger.log("setConnectionState() - connectionStateUpdates are not blocked, performing update to ".. tostring(state))
     led.handleUpdatedConnectionState(state)
 
-    if state == "succesfulConnect" then
+    if state == "succesfulConnect" or state == "processDisconnected" then
       webServiceAliasMeasurePerformanceAllAsync()
     end
     setGeneralConfigElement("connectionstate", state)
