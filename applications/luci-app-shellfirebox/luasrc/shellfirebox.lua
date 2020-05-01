@@ -1663,6 +1663,7 @@ function proc.killAll(pattern, level)
       if k and k ~= "" and #k > 0
       then
         sys.process.signal(k,level)
+        sys.process.signal(k,level)
       end
     end
   end

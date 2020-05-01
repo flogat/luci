@@ -127,9 +127,8 @@ function handleAjax()
   if luci.http.formvalue("performAction") == "1" then
     if luci.http.formvalue("action") == "abort" then
       -- if changing server, abort the server change
-      if shellfirebox.getConnectionState() == "serverChange" then
+      if shellfirebox.getConnectionState() == "serverChange" or shellfirebox.getConnectionState() == "connectionModeChange" then
         shellfirebox.abortSetServer()
-      elseif shellfirebox.getConnectionState() == "connectionModeChange" then
         shellfirebox.abortSetConnectionMode()
       else
         -- otherwise kill the openvpn process / disconnect
