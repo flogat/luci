@@ -14,6 +14,7 @@ function isWanConnected()
     local line
     for line in wan_dump:lines() do
       if line == "1" then
+        wan_dump:close()
         return true
       end
     end
