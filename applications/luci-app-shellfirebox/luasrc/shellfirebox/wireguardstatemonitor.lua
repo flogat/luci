@@ -19,6 +19,8 @@ function isWanConnected()
     end
   end
 
+  wan_dump:close()
+
   return false
 end
 
@@ -61,7 +63,7 @@ function getWireguardStatus()
       end
     end
   end
-
+  wg_dump:close()
   return data["wg0"]
 end
 
