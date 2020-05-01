@@ -80,8 +80,8 @@ while true do
   currentStatusConnected = shellfirebox.getConnectionState() == "succesfulConnect"
 
   currentConnectionMode = shellfirebox.getConnectionMode()
-  if shellfirebox.getConnectionState() == "connectionModeChange" and currentConnectionMode ~= 0 then
-    debugger.log("wireguardstatemonitor - connectionState==connectionModeChange and currentConnectionMode <> 0 -> changing connection mode to something else than wireguard, my services are no longer needed - i quit.")
+  if shellfirebox.getConnectionState() == "connectionModeChange" and not currentConnectionMode == 0 then
+    debugger.log("wireguardstatemonitor - connectionState==connectionModeChange and currentConnectionMode= " .. tostring(currentConnectionMode) .. " <> 0 -> changing connection mode to something else than wireguard, my services are no longer needed - i quit.")
     do return end
   end
 
