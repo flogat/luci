@@ -12,6 +12,7 @@ PKG_VERSION:=$$(shell git rev-list HEAD --count)
 define Package/luci-app-shellfirebox/postinst
 #!/bin/sh
 # /usr/lib/lua/luci/shellfirebox/scripts/down.sh
+/bin/rm /tmp/luci-*/*
 exit 0
 endef
 

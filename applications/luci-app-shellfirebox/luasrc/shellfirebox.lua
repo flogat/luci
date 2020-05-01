@@ -84,7 +84,7 @@ function getConnectionMode()
 end
 
 function killWireguardStateMonitor()
-  proc.killall(" | grep lua | grep wireguardstatemonitor.lua")
+  proc.killAll(" | grep lua | grep wireguardstatemonitor.lua")
 end
 
 -- Set the connectionmode
