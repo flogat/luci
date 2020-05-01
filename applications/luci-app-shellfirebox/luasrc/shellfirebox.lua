@@ -83,12 +83,16 @@ function getConnectionMode()
   return getGeneralConfigElement("connectionMode")
 end
 
+function killWireguardStateMonitor()
+  proc.killall(" | grep lua | grep wireguardstatemonitor.lua")
+end
+
 -- Set the connectionmode
 -- 0 = Wireguard, 1 = UDP; 2=TCP; 3=obfsproxy over TCP
 function setConnectionMode(connectionMode, reconnect)
   debugger.log("setConnectionMode("..connectionMode..") - start")
 
-  proc.killAll(" | grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
 
   local oldConnectionMode = getConnectionMode()
 
@@ -356,7 +360,7 @@ end
 
 function abortConnect()
   proc.killAll(" | grep lua | grep connect")
-  proc.killAll(" | grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
 
   setBlockConnectionStateUpdate(false)
   setConnectionState("processDisconnected")
@@ -832,12 +836,12 @@ end
 
 function abortSetServer()
   proc.killAll(" | grep lua | grep setServerTo")
-  proc.killAll(" | grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
 end
 
 function abortSetConnectionMode()
   proc.killAll("| grep lua | grep setConnectionMode")
-  proc.killAll("| grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
   debugger.log("abortSetConnectionMode() - finished")
 end
 
@@ -847,7 +851,7 @@ function disconnect(noStateUpdate)
 
   setAutostartRequested("false")
 
-  proc.killAll(" | grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
   local connectionMode = tostring(getConnectionMode())
   if connectionMode == "0" then
     disconnectWireguard()
@@ -1104,7 +1108,7 @@ end
 function connectWireguard()
   debugger.log("shellfirebox.connectWireguard() - start")
   
-  proc.killAll(" | grep lua | grep wireguardstatemonitor")
+  killWireguardStateMonitor()
 
   local server = getSelectedServerDetails()
   local wireguardPublicKeyServer = server.wireguardPublicKey
@@ -1130,7 +1134,7 @@ function connectWireguard()
 
   luci.sys.exec("ifup wg0")
 
-  luci.sys.exec("/usr/lib/lua/luci/shellfirebox/wireguardstatemonitor.lua &")
+  luci.sys.call("/usr/lib/lua/luci/shellfirebox/wireguardstatemonitor.lua &")
 
   debugger.log("shellfirebox.connectWireguard() - finish")
 end
@@ -1662,7 +1666,8 @@ function proc.killAll(pattern, level)
     for i, k in pairs(pidTable) do
       if k and k ~= "" and #k > 0
       then
-        sys.process.signal(k,level)
+        sys.process.signal(k,1)
+        sys.process.signal(k,15)
         sys.process.signal(k,level)
       end
     end
