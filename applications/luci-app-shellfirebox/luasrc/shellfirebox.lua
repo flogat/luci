@@ -140,6 +140,11 @@ function setConnectionMode(connectionMode, reconnect)
       ensureWireguardKeySetup()
     end
 
+    if oldConnectionMode == "0" then
+      debugger.log("changing from wireguard, updating vpn data")
+      refreshOpenVpnParams()
+    end
+
     if reconnect then
 
       debugger.log("setConnectionMode("..connectionMode..") - automatic reconnect is enabled - performing connect")
