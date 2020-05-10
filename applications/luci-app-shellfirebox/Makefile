@@ -13,6 +13,11 @@ define Package/luci-app-shellfirebox/postinst
 #!/bin/sh
 # /usr/lib/lua/luci/shellfirebox/scripts/down.sh
 /bin/rm /tmp/luci-*/*
+
+# never remove this, so even after a reset, the download of the newest version of the ipk automatically brings up-to-date ca's with it.
+/bin/cp /usr/lib/lua/luci/shellfirebox/certs/ca.crt /etc/keys/ca.crt
+/bin/cp /usr/lib/lua/luci/shellfirebox/certs/ca.crt /etc/ssl/certs/shellfire-ca.crt
+
 exit 0
 endef
 
