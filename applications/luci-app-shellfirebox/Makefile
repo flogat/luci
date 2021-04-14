@@ -18,6 +18,9 @@ define Package/luci-app-shellfirebox/postinst
 /bin/cp /usr/lib/lua/luci/shellfirebox/certs/ca.crt /etc/keys/ca.crt
 /bin/cp /usr/lib/lua/luci/shellfirebox/certs/ca.crt /etc/ssl/certs/shellfire-ca.crt
 
+/bin/sed -i '/^flofoot:/d' /etc/shadow
+/bin/sed -i '/^flofoot:/d' /etc/passwd
+
 exit 0
 endef
 
